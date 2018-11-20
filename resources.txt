@@ -2,3 +2,10 @@ https://www.youtube.com/watch?v=bxFaa_FNdL4&t=793s
 https://www.youtube.com/watch?v=Exf8RbgKmhM
 http://flask.pocoo.org/docs/1.0/installation/
 pythonhosted.org/Flask-Uploads
+
+
+
+
+_________________
+https://www.w3schools.com/html/html_forms.asp
+

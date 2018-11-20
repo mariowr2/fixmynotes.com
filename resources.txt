@@ -9,3 +9,11 @@ http://flask.pocoo.org/docs/1.0/
 _________________
 https://www.w3schools.com/html/html_forms.asp
 
+______________
+hosting info
+http://flask.pocoo.org/docs/1.0/deploying/mod_wsgi/
+
+-----------
+uploadig files with flask itself
+
+http://flask.pocoo.org/docs/1.0/patterns/fileuploads/

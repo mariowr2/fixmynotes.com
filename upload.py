@@ -15,7 +15,7 @@ pdf = UploadSet('pdf', 'pdf') # create Upload Set object
 
 #configure upload sets object
 
-app.config['UPLOADED_PDF_DEST'] = os.getcwd()+"/static/img" 
+app.config['UPLOADED_PDF_DEST'] = os.getcwd()+"/uploaded_files" 
 #!!!!app.config['UPLOADED_PDF_URL'] = URL WHERE FILES WILL BE SERVED
 #app.config['UPLOADED_PDF_ALLOW'] = '' ALLOWED FILE EXTENSIONS
 patch_request_class(app, 16777216) #set maximum size to 16MB

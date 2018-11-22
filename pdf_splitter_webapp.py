@@ -74,9 +74,7 @@ def upload_pdf():
 	except werkzeug.exceptions.RequestEntityTooLarge:	
 		flash("Maximum file size is 21 MB ;)")
 		return redirect(url_for('unsuccesful'))
-	except e:
-		flash("Unkown error ocurred. CONTACT ADMIN")
-		return redirect(url_for('unsuccesful'))
+
 
 
 	return render_template('upload.html') # if not a post request, show the html for submitting the file

@@ -1,3 +1,4 @@
 pdf_splitter/
-uploaded_files/*
+uploaded_files/*.pdf
 *.pyc
+venv/

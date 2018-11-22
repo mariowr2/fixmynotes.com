@@ -47,10 +47,10 @@ def find_upper_left_slide(image, pdf_name, min_width, min_height, max_width, max
 	slide_box_coordinates = find_box_using_opencv(image_quadrant, min_width, min_height, max_width, max_height) #find the cords of the slide in the upper left quadrant
 
 	if slide_box_coordinates is None:
-		print "Failed to find slide in left upper quadrant in file "+pdf_name
+		#print "Failed to find slide in left upper quadrant in file "+pdf_name
 		return None
 	else:
-		print "Success finding slide in left upper quadrant in file "+pdf_name
+		#print "Success finding slide in left upper quadrant in file "+pdf_name
 		return slide_box_coordinates
 
 def calculate_all_slides_coords(upper_left_coords, pdf_size): #calculate one pair of coordinates for all boxes AND width and height of each box
@@ -133,10 +133,10 @@ def crop_images(images, coords, size):  # crop all images once the coordinates a
 		
 	return cropped_images
 
-def create_new_document(slides,files_processed): #create the output document
+def create_new_document(filename, slides,files_processed, output_destination): #create the output document
 	
-	output_filename = "OUTPUT"+str(files_processed)+".pdf"
-	working_dir_path = os.getcwd()+"/"+output_filename # get full path of file
+	output_filename = "new_"+filename
+	working_dir_path = os.getcwd()+"/"+output_destination+"/"+output_filename # get full path of file
 	c = canvas.Canvas(working_dir_path, pagesize=letter) # create pdf document
 
 	# save all images into pdf, one page at a time
@@ -149,6 +149,7 @@ def create_new_document(slides,files_processed): #create the output document
 		c.drawImage(side_out,50,250)
 		c.showPage()
 	c.save() # save the output!
+	return output_filename
 
 def resize_images(images): #resize all images before they are included in the output	
 	if images is not None:
@@ -177,16 +178,16 @@ def assert_document_dimensions(width, height):
 
 ################### MAIN PROCESSING FOR EACH PDF , called in a loop from main
 
-def process_pdf(pdf_name, files_processed, min_slide_width, min_slide_height, max_slide_width, max_slide_height):
+def process_pdf(pdf_name, input_location, output_destination,files_processed=1, min_slide_width=200, min_slide_height=200, max_slide_width=1050, max_slide_height=840):
 	
-	images = extract_images_from_pdf(pdf_name) # get all pages in pdf as images
-
-	print images[0].size
+	#  it is assumed output_destination is ONLY the name of the output directory, example : 'processed_files'
+	# on the other hand it is assumed that 'input_location' ALREADY comes in the form of '/directory/'
+	images = extract_images_from_pdf(input_location+pdf_name) # get all pages in pdf as images
 	
 	if (images and len(images) > 0): #verify that the image extraction was successful
 
 		document_orientation = assert_document_dimensions(images[0].size[0], images[0].size[1])
-		print document_orientation
+
 		if document_orientation == "portrait" or document_orientation == "landscape":  # make sure the dimensions of the document are coorect
 
 			upper_left_box_coordinates = find_upper_left_slide(images[0], pdf_name, min_slide_width, min_slide_height, max_slide_width, max_slide_height) # attempt to find an individual slides so that slides can be centered in their own page
@@ -200,47 +201,49 @@ def process_pdf(pdf_name, files_processed, min_slide_width, min_slide_height, ma
 					print "All slides found successfully in " + pdf_name
 					cropped_slide_images = crop_images(images, slide_coordinates, slide_dimentions)
 					resized_images = resize_images(cropped_slide_images)
-					output_document = create_new_document(resized_images, files_processed)
+					output_document_name = create_new_document(pdf_name, resized_images, files_processed, output_destination) # DOCUMENT PROCESSED SUCCESFULLY!
+					return output_document_name
 
 				else:
-					print "Not all slides were found successfully in " + pdf_name
+					return "Not all slides were found successfully in"
 			
 			else:
-				print "Failed to find slide in quadrant in " + pdf_name
+				return "Failed to find individual slides in each page"
 
 		else:
-			print "PDF is not letter size (A4 size)"
-
-
-
+			return "PDF is not letter size (A4 size)"
 	else:
-		print "Failed to extract pages from document in " + pdf_name
+		return "Failed to extract pages from document in file"
 
 
 
-def main(argv):
-
-	#bounds for findinig slides in document
-	min_slide_width = 200
-	min_slide_height = 200
-	max_slide_width = 1050 #width of a quarter of a letter size pdf is 1100
-	max_slide_height = 840 #height of a quarter of a letter size pdf is 850
-
-	print str(len(sys.argv) -1) + " file(s) will be split."
-	files_processed = 1
-
-	for file in sys.argv: # for each file do all the splitting
-		if not(str(file) == "split_pdf.py"): #ignore the first argument (the name of the program)
-			split_pdf = process_pdf(file, files_processed, min_slide_width, min_slide_height, max_slide_width, max_slide_height) # proces the pdf
-			files_processed = files_processed + 1
-	print "Finished"
 
 
 
-if __name__ == "__main__":
-	user_example = "example: $ python split_pdf.py {pdf_filename} {(optional) pdf_filename_2}"
-	if(len(sys.argv) < 2):
-		print "ERROR: No PDF supplied"
-		print user_example
-	else:	
-		main(sys.argv[1:]) # launch
+
+# def main(argv):
+
+# 	#bounds for findinig slides in document
+# 	min_slide_width = 200
+# 	min_slide_height = 200
+# 	max_slide_width = 1050 #width of a quarter of a letter size pdf is 1100
+# 	max_slide_height = 840 #height of a quarter of a letter size pdf is 850
+
+# 	print str(len(sys.argv) -1) + " file(s) will be split."
+# 	files_processed = 1
+
+# 	for file in sys.argv: # for each file do all the splitting
+# 		if not(str(file) == "split_pdf.py"): #ignore the first argument (the name of the program)
+# 			split_pdf = process_pdf(file, files_processed, min_slide_width, min_slide_height, max_slide_width, max_slide_height) # proces the pdf
+# 			files_processed = files_processed + 1
+# 	print "Finished"
+
+
+
+# if __name__ == "__main__":
+# 	user_example = "example: $ python split_pdf.py {pdf_filename} {(optional) pdf_filename_2}"
+# 	if(len(sys.argv) < 2):
+# 		print "ERROR: No PDF supplied"
+# 		print user_example
+# 	else:	
+#		main(sys.argv[1:]) # launch

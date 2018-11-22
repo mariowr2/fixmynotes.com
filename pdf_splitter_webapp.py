@@ -57,6 +57,7 @@ def upload_pdf():
 				return redirect(url_for('unsuccesful'))
 
 	# TODO , SERVE CUSTOM PAGE WHEN THIS ERROR IS RAISED, SERVER CURRENTLY TERMINATES CONNECTION
+	# excpetion documentation at http://werkzeug.pocoo.org/docs/0.14/exceptions/#werkzeug.exceptions.RequestEntityTooLarge
 	except RequestEntityTooLarge:	
 		flash("Maximum file size is 21 MB ;)")
 		return redirect(url_for('unsuccesful'))

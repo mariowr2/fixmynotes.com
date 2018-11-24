@@ -4,3 +4,4 @@ served_files/*.pdf
 *.pyc
 venv/
 virtual_env/
+app.log

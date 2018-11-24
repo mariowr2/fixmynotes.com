@@ -143,4 +143,4 @@ def handle_not_found(e):
 	return redirect(url_for('error'))
 
 if __name__ == "__main__":
-	app.run(debug=True)
+	app.run()

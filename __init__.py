@@ -1,10 +1,17 @@
 from flask import Flask , render_template, request, flash, url_for, redirect, send_from_directory
 from werkzeug.utils import secure_filename
-#from werkzeug.exceptions import RequestEntityTooLarge, BadRequest
 import werkzeug.exceptions
 import os
 import split_pdf # oh yea
 import subprocess
+
+#new import for logging
+from logging.handlers import RotatingFileHandler
+from flask import request, jsonify
+from time import strftime
+
+import logging
+import traceback
 
 
 #======================================================
@@ -91,24 +98,10 @@ def uploaded_file(filename):
 #serve the file with the new name as part of the url for
 @app.route('/fixed/<output_filename>')
 def serve_file(output_filename):
-
 	output_path = os.getcwd()+"/"+file_output_location #get the directory where the file is stored
-
-	#newstr = oldstr[:4] + oldstr[5:]
-	
 	uploaded_filename = output_filename[4:]
 	clear_uploaded_file(uploaded_filename) # delete the file that was uploaded
-	
-
-
 	return send_from_directory(output_path, output_filename) #serve the processed file!
-
-
-
-
-
-
-
 
 
 
@@ -124,13 +117,44 @@ def succesful():
 def error():
 	return render_template('error.html')
 
+
+@app.after_request
+def after_request(response):
+
+	if response.status_code != 500:
+		ts = strftime('[%Y-%b-%d %H:%M]')
+		logger.error(ts+" "+request.remote_addr+" "+request.method
+         	+" "+request.scheme+" "+request.full_path+" "+response.status)
+	return response
+		
+
+
+#====================================================
+#	ERROR HANDLING AND LOGGING
+#===================================================
+
+@app.errorhandler(Exception)
+def exceptions(e):
+
+    ts = strftime('[%Y-%b-%d %H:%M]')
+    tb = traceback.format_exc()
+    logger.error('%s %s %s %s %s 5xx INTERNAL SERVER ERROR\n%s',
+                  ts,
+                  request.remote_addr,
+                  request.method,
+                  request.scheme,
+                  request.full_path,
+                  tb)
+    return "Internal Server Error", 500
+
+
 # unsure if works or not
 @app.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
 def handle_request_too_large(e):
 	flash("Terrible error ocurred. Maximum file size is "+str(MAX_FILE_SIZE)+" MB")
 	return redirect(url_for('unsuccesful'))
 
-#should work
+#work
 @app.errorhandler(werkzeug.exceptions.BadRequest)
 def handle_bad_request(e):
 	flash("Terrible error ocurred. (Bad Request)")
@@ -142,5 +166,11 @@ def handle_not_found(e):
 	flash("4 0 4")
 	return redirect(url_for('error'))
 
+
+
 if __name__ == "__main__":
+	handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
+	logger = logging.getLogger(__name__)
+	logger.setLevel(logging.ERROR)
+	logger.addHandler(handler)
 	app.run()

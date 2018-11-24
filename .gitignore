@@ -3,3 +3,4 @@ uploaded_files/*.pdf
 served_files/*.pdf
 *.pyc
 venv/
+virtual_env/

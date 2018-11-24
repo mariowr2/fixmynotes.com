@@ -49,51 +49,66 @@ def clear_uploaded_file(uploaded_filename):
 #file uploading
 @app.route('/', methods=['GET', 'POST'])
 def upload_pdf():
-	try:
-		if request.method == 'POST':
-			if 'pdf' in request.files:
-				pdf_file = request.files['pdf']
-				if not pdf_file.filename == '':
-					if pdf_file and allowed_filename(pdf_file.filename):
-						filename = secure_filename(pdf_file.filename) # make sure the filename is not dangerous
-						pdf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))# save the file!				
-						return redirect(url_for('uploaded_file',filename=filename))	
-					else:
-						flash("Only PDF's allowed ;)")
-						return redirect(url_for('unsuccesful'))
+
+	if request.method == 'POST':
+		if 'pdf' in request.files:
+			pdf_file = request.files['pdf']
+			if not pdf_file.filename == '':
+				if pdf_file and allowed_filename(pdf_file.filename):
+					filename = secure_filename(pdf_file.filename) # make sure the filename is not dangerous
+					pdf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))# save the file!				
+					return redirect(url_for('uploaded_file',filename=filename))	
 				else:
-					flash("No file selected")
+					flash("Only PDF's allowed ;)")
 					return redirect(url_for('unsuccesful'))
 			else:
-				flash("Failed to upload")
+				flash("No file selected")
 				return redirect(url_for('unsuccesful'))
-
-	# TODO , SERVE CUSTOM PAGE WHEN THIS ERROR IS RAISED, SERVER CURRENTLY TERMINATES CONNECTION
-	# excpetion documentation at http://werkzeug.pocoo.org/docs/0.14/exceptions/#werkzeug.exceptions.RequestEntityTooLarge
-	#http://flask.pocoo.org/docs/1.0/errorhandling/#application-errors
-	except werkzeug.exceptions.RequestEntityTooLarge:	
-		flash("Maximum file size is 21 MB ;)")
-		return redirect(url_for('unsuccesful'))
-
-
+		else:
+			flash("Failed to upload")
+			return redirect(url_for('unsuccesful'))
 
 	return render_template('upload.html') # if not a post request, show the html for submitting the file
 
 
 
-#file serving
+#process pdf, verify successful and then send it to a custom url
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
+	
 	output_filename = split_pdf.process_pdf(filename, file_input_location, file_output_location) #make the magic happen
-	output_path = os.getcwd()+"/"+file_output_location #get the directory where the file is stored
 
-	#make sure it was converted correctly
 	if allowed_filename(output_filename):
-		clear_uploaded_file(filename) # delete the file that was uploaded
-		return send_from_directory(output_path, output_filename) #serve the processed file!
+		return redirect(url_for('serve_file', output_filename=output_filename))
 	else:
 		flash(output_filename)
 		return redirect(url_for('unsuccesful'))
+
+
+	
+
+
+#serve the file with the new name as part of the url for
+@app.route('/fixed/<output_filename>')
+def serve_file(output_filename):
+
+	output_path = os.getcwd()+"/"+file_output_location #get the directory where the file is stored
+
+	#newstr = oldstr[:4] + oldstr[5:]
+	
+	uploaded_filename = output_filename[4:]
+	clear_uploaded_file(uploaded_filename) # delete the file that was uploaded
+	
+
+
+	return send_from_directory(output_path, output_filename) #serve the processed file!
+
+
+
+
+
+
+
 
 
 
@@ -128,4 +143,4 @@ def handle_not_found(e):
 	return redirect(url_for('error'))
 
 if __name__ == "__main__":
-	app.run()
+	app.run(debug=True)

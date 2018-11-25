@@ -184,6 +184,6 @@ def handle_not_found(e):
 
 if __name__ == "__main__":
 	handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
-	logger.setLevel(logging.ERROR)
+	logger.setLevel(logging.DEBUG)
 	logger.addHandler(handler)
 	app.run()

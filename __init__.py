@@ -29,6 +29,8 @@ file_output_location = "served_files"
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE * 1024 * 1024
 ALLOWED_EXTENSIONS = set(['pdf']) # allowed file extensions
 
+#logger obj
+logger = logging.getLogger(__name__)
 
 #=======================================================
 # DEFS
@@ -170,7 +172,6 @@ def handle_not_found(e):
 
 if __name__ == "__main__":
 	handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
-	logger = logging.getLogger(__name__)
 	logger.setLevel(logging.ERROR)
 	logger.addHandler(handler)
 	app.run()

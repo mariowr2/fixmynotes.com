@@ -23,7 +23,7 @@ app = Flask(__name__) #create flask object
 app.secret_key = 'secret' #secret cookie key for flash!
 MAX_FILE_SIZE = 16 #size in MB
 
-app.config['UPLOAD_FOLDER'] = os.getcwd()+"/uploaded_files" #save path
+app.config['UPLOAD_FOLDER'] = "/uploaded_files" #save path
 file_input_location = "/uploaded_files/" # passed to the script that manipulates the pdf 
 file_output_location = "served_files"
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE * 1024 * 1024
@@ -31,6 +31,13 @@ ALLOWED_EXTENSIONS = set(['pdf']) # allowed file extensions
 
 #logger obj
 logger = logging.getLogger(__name__)
+
+#=====================================================
+#	APP ROOT PATH ON PRODUCTION SERVER
+#=====================================================
+
+app.root_path = '/var/www/FixNotes/FixNotes'
+
 
 #=======================================================
 # DEFS
@@ -65,7 +72,12 @@ def upload_pdf():
 			if not pdf_file.filename == '':
 				if pdf_file and allowed_filename(pdf_file.filename):
 					filename = secure_filename(pdf_file.filename) # make sure the filename is not dangerous
-					pdf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))# save the file!				
+					#debug
+					#pdf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))# save the file!				
+
+					#PRODUCTION
+					#production_path = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
+					pdf_file.save(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'], filename)) #****************************************
 					return redirect(url_for('uploaded_file',filename=filename))	
 				else:
 					flash("Only PDF's allowed ;)")

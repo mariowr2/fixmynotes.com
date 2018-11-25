@@ -17,6 +17,10 @@ echo "Done"
 # actual backend dependencies
 pip install Flask
 pip install Werkzeug
+
+#second attempt
+pip install gunicorn
+
 echo "Done"
 
 echo "Linking cv.so to virtual environment..."

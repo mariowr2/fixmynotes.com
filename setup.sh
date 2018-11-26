@@ -20,6 +20,7 @@ pip install Werkzeug
 
 #second attempt
 pip install gunicorn
+pip install eventlet
 
 echo "Done"
 

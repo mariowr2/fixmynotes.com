@@ -25,9 +25,9 @@ MAX_FILE_SIZE = 16 #size in MB
 
 app.root_path = os.getcwd()
 
-app.config['UPLOAD_FOLDER'] = str(app.root_path) + "/uploaded_files" #save path
-file_input_location = "/uploaded_files/" # passed to the script that manipulates the pdf 
-file_output_location = "served_files"
+app.config['UPLOAD_FOLDER'] = str(app.root_path) + "/static/uploaded_files" #save path
+file_input_location = "/static/uploaded_files/" # passed to the script that manipulates the pdf 
+file_output_location = "/static/served_files"
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE * 1024 * 1024
 ALLOWED_EXTENSIONS = set(['pdf']) # allowed file extensions
 
@@ -49,7 +49,7 @@ def allowed_filename(filename):
 
 #delete the uploaded file once it has been processed
 def clear_uploaded_file(uploaded_filename):
-	script_path = os.getcwd()+file_input_location+"delete_pdfs.sh"
+	script_path = str(app.root_path)+file_input_location+"delete_pdfs.sh"
 	print_debug_msg(uploaded_filename)
 	subprocess.call([script_path, uploaded_filename])
 

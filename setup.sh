@@ -1,6 +1,7 @@
 #!/bin/bash
 
 echo "Creating virtual environment..."
+sudo apt-get install python-pip
 sudo pip install virtualenv
 virtualenv virtual_env --python=/usr/bin/python2.7 #this line assumes /usr/bin/python2.7 exists
 source virtual_env/bin/activate

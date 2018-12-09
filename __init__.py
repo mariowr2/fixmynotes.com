@@ -97,8 +97,6 @@ def uploaded_file(filename):
 	else:
 		flash(output_filename)
 		return redirect(url_for('unsuccesful'))
-
-
 	
 
 

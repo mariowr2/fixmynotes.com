@@ -3,6 +3,7 @@
 from pdf2image import convert_from_path
 import PIL
 from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
 from reportlab.platypus.flowables import Image
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
@@ -215,35 +216,3 @@ def process_pdf(pdf_name, input_location, output_destination,files_processed=1, 
 	else:
 		return "Failed to extract pages from document in file"
 
-
-
-
-
-
-
-# def main(argv):
-
-# 	#bounds for findinig slides in document
-# 	min_slide_width = 200
-# 	min_slide_height = 200
-# 	max_slide_width = 1050 #width of a quarter of a letter size pdf is 1100
-# 	max_slide_height = 840 #height of a quarter of a letter size pdf is 850
-
-# 	print str(len(sys.argv) -1) + " file(s) will be split."
-# 	files_processed = 1
-
-# 	for file in sys.argv: # for each file do all the splitting
-# 		if not(str(file) == "split_pdf.py"): #ignore the first argument (the name of the program)
-# 			split_pdf = process_pdf(file, files_processed, min_slide_width, min_slide_height, max_slide_width, max_slide_height) # proces the pdf
-# 			files_processed = files_processed + 1
-# 	print "Finished"
-
-
-
-# if __name__ == "__main__":
-# 	user_example = "example: $ python split_pdf.py {pdf_filename} {(optional) pdf_filename_2}"
-# 	if(len(sys.argv) < 2):
-# 		print "ERROR: No PDF supplied"
-# 		print user_example
-# 	else:	
-#		main(sys.argv[1:]) # launch

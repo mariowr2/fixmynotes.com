@@ -66,13 +66,11 @@ def upload_pdf():
 			pdf_file = request.files['pdf']
 			if not pdf_file.filename == '':
 				if pdf_file and allowed_filename(pdf_file.filename):
-					filename = secure_filename(pdf_file.filename) # make sure the filename is not dangerous
-					#debug
-					#pdf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))# save the file!				
+					filename = secure_filename(pdf_file.filename) # make sure the filename is not dangerous		
 
 					#PRODUCTION
 					#production_path = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
-					pdf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename)) #****************************************
+					pdf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 					return redirect(url_for('uploaded_file',filename=filename))	
 				else:
 					flash("Only PDF's allowed ;)")
@@ -92,7 +90,7 @@ def upload_pdf():
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
 	
-	output_filename = split_pdf.process_pdf(filename, file_input_location, file_output_location) #make the magic happen
+	output_filename = split_pdf.process_pdf(filename, file_input_location, file_output_location) #use the pdf splitter module to do the work
 
 	if allowed_filename(output_filename):
 		return redirect(url_for('serve_file', output_filename=output_filename))
@@ -107,7 +105,7 @@ def uploaded_file(filename):
 #serve the file with the new name as part of the url for
 @app.route('/fixed/<output_filename>')
 def serve_file(output_filename):
-	output_path = os.getcwd()+"/"+file_output_location #get the directory where the file is stored
+	output_path = app.root_path+"/"+file_output_location #get the directory where the file is stored
 	uploaded_filename = output_filename[4:]
 	clear_uploaded_file(uploaded_filename) # delete the file that was uploaded
 	return send_from_directory(output_path, output_filename) #serve the processed file!

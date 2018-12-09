@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#delete the uploaded file
+#delete the file uploaded to the server for fixing after processing it
 
 FILENAME=$1
-DIRECTORY="uploaded_files/" 
+DIRECTORY="static/uploaded_files/" 
 DIRECTORY+=$FILENAME
 rm "$DIRECTORY"

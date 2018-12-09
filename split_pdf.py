@@ -137,7 +137,7 @@ def crop_images(images, coords, size):  # crop all images once the coordinates a
 def create_new_document(filename, slides,files_processed, output_destination): #create the output document
 	
 	output_filename = "new_"+filename
-	working_dir_path = os.getcwd()+"/"+output_destination+"/"+output_filename # get full path of file
+	working_dir_path = output_destination+output_filename # get full path of file
 	c = canvas.Canvas(working_dir_path, pagesize=letter) # create pdf document
 
 	# save all images into pdf, one page at a time
@@ -181,8 +181,6 @@ def assert_document_dimensions(width, height):
 
 def process_pdf(pdf_name, input_location, output_destination,files_processed=1, min_slide_width=200, min_slide_height=200, max_slide_width=1050, max_slide_height=840):
 	
-	#  it is assumed output_destination is ONLY the name of the output directory, example : 'processed_files'
-	# on the other hand it is assumed that 'input_location' ALREADY comes in the form of '/directory/'
 	images = extract_images_from_pdf(input_location+pdf_name) # get all pages in pdf as images
 	
 	if (images and len(images) > 0): #verify that the image extraction was successful

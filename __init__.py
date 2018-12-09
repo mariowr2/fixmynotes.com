@@ -23,11 +23,19 @@ app = Flask(__name__) #create flask object
 app.secret_key = 'secret' #secret cookie key for flash!
 MAX_FILE_SIZE = 16 #size in MB
 
-app.root_path = os.getcwd()
+#debug
+#app.root_path = os.getcwd()
+
+#production
+app.root_path = '/var/www/Fix/Fix'
 
 app.config['UPLOAD_FOLDER'] = str(app.root_path) + "/static/uploaded_files" #save path
-file_input_location = "/static/uploaded_files/" # passed to the script that manipulates the pdf 
-file_output_location = "/static/served_files"
+file_input_location_relative = "/static/uploaded_files/" # passed to the script that manipulates the pdf 
+file_input_location_absolute = "var/www/Fix/Fix/static/uploaded_files/" # passed to the script that manipulates the pdf 
+
+file_output_location_relative = "/static/served_files"
+file_output_location_absolute = "/var/www/Fix/Fix/static/served_files/"
+
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE * 1024 * 1024
 ALLOWED_EXTENSIONS = set(['pdf']) # allowed file extensions
 
@@ -49,7 +57,7 @@ def allowed_filename(filename):
 
 #delete the uploaded file once it has been processed
 def clear_uploaded_file(uploaded_filename):
-	script_path = str(app.root_path)+file_input_location+"delete_pdfs.sh"
+	script_path = str(app.root_path)+file_input_location_relative+"delete_pdfs.sh"
 	print_debug_msg(uploaded_filename)
 	subprocess.call([script_path, uploaded_filename])
 
@@ -90,7 +98,7 @@ def upload_pdf():
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
 	
-	output_filename = split_pdf.process_pdf(filename, file_input_location, file_output_location) #use the pdf splitter module to do the work
+	output_filename = split_pdf.process_pdf(filename, file_input_location_absolute, file_output_location_absolute) #use the pdf splitter module to do the work
 
 	if allowed_filename(output_filename):
 		return redirect(url_for('serve_file', output_filename=output_filename))
@@ -103,7 +111,7 @@ def uploaded_file(filename):
 #serve the file with the new name as part of the url for
 @app.route('/fixed/<output_filename>')
 def serve_file(output_filename):
-	output_path = app.root_path+"/"+file_output_location #get the directory where the file is stored
+	output_path = app.root_path+file_output_location_relative #get the directory where the file is stored
 	uploaded_filename = output_filename[4:]
 	clear_uploaded_file(uploaded_filename) # delete the file that was uploaded
 	return send_from_directory(output_path, output_filename) #serve the processed file!
@@ -138,19 +146,6 @@ def after_request(response):
 #	ERROR HANDLING AND LOGGING
 #===================================================
 
-# @app.errorhandler(Exception)
-# def exceptions(e):
-
-#     ts = strftime('[%Y-%b-%d %H:%M]')
-#     tb = traceback.format_exc()
-#     logger.error('%s %s %s %s %s 5xx INTERNAL SERVER ERROR\n%s',
-#                   ts,
-#                   request.remote_addr,
-#                   request.method,
-#                   request.scheme,
-#                   request.full_path,
-#                   tb)
-#     return "Internal Server Error", 500
 
 
 # unsure if works or not
@@ -159,13 +154,13 @@ def handle_request_too_large(e):
 	flash("Terrible error ocurred. Maximum file size is "+str(MAX_FILE_SIZE)+" MB")
 	return redirect(url_for('unsuccesful'))
 
-#work
+
 @app.errorhandler(werkzeug.exceptions.BadRequest)
 def handle_bad_request(e):
 	flash("Terrible error ocurred. (Bad Request)")
 	return redirect(url_for('error'))
 
-#works
+
 @app.errorhandler(werkzeug.exceptions.NotFound)
 def handle_not_found(e):
 	flash("4 0 4")

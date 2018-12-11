@@ -19,9 +19,6 @@ echo "Done"
 pip install Flask
 pip install Werkzeug
 
-#second attempt
-pip install gunicorn
-pip install eventlet
 
 echo "Done"
 

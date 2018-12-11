@@ -4,7 +4,7 @@ import werkzeug.exceptions
 import os
 import split_pdf # oh yea
 import subprocess
-
+import sys
 #new import for logging
 from logging.handlers import RotatingFileHandler
 from flask import request, jsonify
@@ -12,6 +12,7 @@ from time import strftime
 
 import logging
 import traceback
+
 
 
 #======================================================
@@ -23,18 +24,18 @@ app = Flask(__name__) #create flask object
 app.secret_key = 'secret' #secret cookie key for flash!
 MAX_FILE_SIZE = 16 #size in MB
 
-#debug
-#app.root_path = os.getcwd()
+app.root_path = None
+#determine if the app is being run in DEBUG mode and update app root paths
+if (len(sys.argv) > 1) and (sys.argv[1] == "DEBUG"):
+	app.root_path = os.getcwd()
+	print "Running application in debug mode..."
+else:
+	app.root_path = '/var/www/Fix/Fix'
+	print "Running application in production mode..."
 
-#production
-app.root_path = '/var/www/Fix/Fix'
-
-app.config['UPLOAD_FOLDER'] = str(app.root_path) + "/static/uploaded_files" #save path
-file_input_location_relative = "/static/uploaded_files/" # passed to the script that manipulates the pdf 
-file_input_location_absolute = "var/www/Fix/Fix/static/uploaded_files/" # passed to the script that manipulates the pdf 
-
-file_output_location_relative = "/static/served_files"
-file_output_location_absolute = "/var/www/Fix/Fix/static/served_files/"
+app.config['UPLOAD_FOLDER'] = str(app.root_path) + "/static/uploaded_files"  
+file_input_location_absolute = str(app.root_path)+"/static/uploaded_files/" 
+file_output_location_absolute = str(app.root_path)+"/static/served_files/"
 
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE * 1024 * 1024
 ALLOWED_EXTENSIONS = set(['pdf']) # allowed file extensions
@@ -46,7 +47,6 @@ logger = logging.getLogger(__name__)
 #=======================================================
 # DEFS
 #=======================================================
-
 def print_debug_msg(msg):
 	print "************************ "+msg
 
@@ -57,9 +57,9 @@ def allowed_filename(filename):
 
 #delete the uploaded file once it has been processed
 def clear_uploaded_file(uploaded_filename):
-	script_path = str(app.root_path)+file_input_location_relative+"delete_pdfs.sh"
-	print_debug_msg(uploaded_filename)
-	subprocess.call([script_path, uploaded_filename])
+	script_path = file_input_location_absolute+"delete_pdfs.sh"
+	print_debug_msg("Deleting processed file "+uploaded_filename)
+	subprocess.call([script_path, file_input_location_absolute,uploaded_filename])
 
 #========================================================
 #	APP ROUTES
@@ -111,10 +111,9 @@ def uploaded_file(filename):
 #serve the file with the new name as part of the url for
 @app.route('/fixed/<output_filename>')
 def serve_file(output_filename):
-	output_path = app.root_path+file_output_location_relative #get the directory where the file is stored
 	uploaded_filename = output_filename[4:]
 	clear_uploaded_file(uploaded_filename) # delete the file that was uploaded
-	return send_from_directory(output_path, output_filename) #serve the processed file!
+	return send_from_directory(file_output_location_absolute, output_filename) #serve the processed file!
 
 
 

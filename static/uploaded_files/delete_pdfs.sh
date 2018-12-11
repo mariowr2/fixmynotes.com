@@ -2,7 +2,7 @@
 
 #delete the file uploaded to the server for fixing after processing it
 
-FILENAME=$1
-DIRECTORY="/var/www/Fix/Fix/static/uploaded_files/" 
+FILENAME=$2
+DIRECTORY=$1
 DIRECTORY+=$FILENAME
 rm "$DIRECTORY"

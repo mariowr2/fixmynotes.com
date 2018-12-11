@@ -90,13 +90,12 @@ def calculate_all_slides_coords(upper_left_coords, pdf_size): #calculate one pai
 	return boxes_coords, (box_width, box_height)
 
 
-def extract_images_from_pdf(pdf_name):	# use the pdf2image library to convert every page in the pdf to an image
+def extract_images_from_pdf(pdf_file_path):	# use the pdf2image library to convert every page in the pdf to an image
 	
-	path_to_pdf = os.getcwd()+"/"+pdf_name # get full path of file
 	images = None
 
 	try:
-		images = convert_from_path(path_to_pdf) #get the images
+		images = convert_from_path(pdf_file_path) #get the images
 	except:
 		print "Error on pdf \""+pdf_name+"\", could not split file " #catch exception
 

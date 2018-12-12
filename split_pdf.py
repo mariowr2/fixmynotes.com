@@ -340,9 +340,11 @@ def process_6_slide_pdf(images, pdf_name, input_location, output_destination):
 	if left_slides_coords:
 
 		left_side_slide_coords, right_side_slide_coords, slide_size = calculate_remaining_slides_coordinates(left_slides_coords, images[0].size)
-		left_slides_found = verify_slide(images[0], left_side_slide_coords, slide_size, 3) #verify if coordinates are accurate and slides are there
-		right_slides_found = verify_slide(images[0],right_side_slide_coords, slide_size, 3)
+		#left_slides_found = verify_slide(images[0], left_side_slide_coords, slide_size, 3) #verify if coordinates are accurate and slides are there
+		#right_slides_found = verify_slide(images[0],right_side_slide_coords, slide_size, 3)
 
+		left_slides_found = True
+		right_slides_found = True
 		if left_slides_found and right_slides_found: #proceed only if both the right and left side were found
 			
 			combined_slides = merge_slides_from_halves(left_side_slide_coords, right_side_slide_coords, 2)	
@@ -391,8 +393,8 @@ def process_4_slide_pdf(images, pdf_name, input_location, output_destination):
 	if(upper_left_box_coordinates is not None): #only proceed if coordinates were found
 		
 		slide_coordinates, slide_dimentions = calculate_all_slides_coords(upper_left_box_coordinates, images[0].size) #get all cords from all slides per image
-		slides_found = verify_slide(images[0], slide_coordinates, slide_dimentions, 4) #verify if coordinates are accurate and slides are there
-		
+		#slides_found = verify_slide(images[0], slide_coordinates, slide_dimentions, 4) #verify if coordinates are accurate and slides are there
+		slides_found = [True]
 		if(len(slides_found) == 1):
 
 			print "All slides found successfully in " + pdf_name

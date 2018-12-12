@@ -1,0 +1,44 @@
+nav{
+      box-shadow: 0 0 40px rgba(0,0,0,0.4);
+      margin-bottom: 40px;
+    }
+    .navbar-brand {
+      letter-spacing: 4px;
+    }
+    .navbar-brand span{
+      background-color: black;
+      color: white;
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      text-align: center;
+      border-radius: 3px;
+      margin-right: -3px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.6);
+    }
+
+    .jumbotron {
+      background-color: white;
+      border-width: 1px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
+
+    .inverse{
+      background-color: rgba(0,0,0,0.8);
+      color: white;
+      padding: 0 8px;
+      box-shadow: 5px 5px 0px rgba(0,0,0,0.4);
+    }
+
+    #home-button{
+      margin-top: 40px;
+    }
+
+    #text-under-banner{
+      margin-top: 20px;
+      font-size: 22px;
+    }
+
+    #unsuccesful-banner{
+      margin-bottom: 30px;
+    }

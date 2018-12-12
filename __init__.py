@@ -75,11 +75,12 @@ def upload_pdf():
 			if not pdf_file.filename == '':
 				if pdf_file and allowed_filename(pdf_file.filename):
 					filename = secure_filename(pdf_file.filename) # make sure the filename is not dangerous		
-
-					#PRODUCTION
-					#production_path = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
-					pdf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-					return redirect(url_for('uploaded_file',filename=filename))	
+					if filename:
+						pdf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename)) #only save if the filename is safe
+						return redirect(url_for('uploaded_file',filename=filename))
+					else:
+						flash("There seems to be something wrong with the name of the file you tried to upload.")	
+						return redirect(url_for('unsuccesful'))
 				else:
 					flash("This webapp only works with pdf files.")
 					return redirect(url_for('unsuccesful'))
@@ -89,7 +90,6 @@ def upload_pdf():
 		else:
 			flash("Failed to upload file.")
 			return redirect(url_for('unsuccesful'))
-
 	return render_template('upload.html') # if not a post request, show the html for submitting the file
 
 

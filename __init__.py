@@ -81,13 +81,13 @@ def upload_pdf():
 					pdf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 					return redirect(url_for('uploaded_file',filename=filename))	
 				else:
-					flash("Only PDF's allowed ;)")
+					flash("This webapp only works with pdf files.")
 					return redirect(url_for('unsuccesful'))
 			else:
-				flash("No file selected")
+				flash("No file was selected.")
 				return redirect(url_for('unsuccesful'))
 		else:
-			flash("Failed to upload")
+			flash("Failed to upload file.")
 			return redirect(url_for('unsuccesful'))
 
 	return render_template('upload.html') # if not a post request, show the html for submitting the file
@@ -121,9 +121,6 @@ def serve_file(output_filename):
 def unsuccesful():
 	return render_template('unsuccesful.html')
 
-@app.route('/succesful')
-def succesful():
-	return render_template('succesful.html')
 
 @app.route('/error/')
 def error():

@@ -87,6 +87,7 @@ def upload_pdf():
 						flash("There seems to be something wrong with the name of the file you tried to upload.")	
 						return redirect(url_for('unsuccesful'))
 				else:
+					clear_uploaded_file(pdf_file.filename) # delete the file that was uploaded
 					flash("This webapp only works with pdf files.")
 					return redirect(url_for('unsuccesful'))
 			else:

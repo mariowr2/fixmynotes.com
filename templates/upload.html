@@ -24,12 +24,29 @@
     <form method=POST enctype=multipart/form-data>
       <input type=file name=pdf style="cursor:pointer">
         <br>
-        <div class="radio">
-            <label id="radio-button"><input type="radio" name="mode" value="0" checked>4 slides per page</label>
+        
+        <p id="text-under-banner">How does a <b>single page</b> of your document look like?</p>
+
+        <div class="row">
+          <div class="radio">
+              <label id="first-radio-button"><input type="radio" name="mode" value="0" checked><img src="static/images/option0.svg" id="image-in-radio-b"></label>
+          </div>
+
+
+          <div class="radio">
+              <label id="radio-button"><input type="radio" name="mode" value="1"><img src="static/images/option1.svg" id="image-in-radio-b"></label>
+          </div>
+
+          <div class="radio">
+              <label id="radio-button"><input type="radio" name="mode" value="2"><img src="static/images/option2.svg" id="image-in-radio-b"></label>
+          </div>
+
         </div>
-        <div class="radio">
-            <label id="radio-button"><input type="radio" name="mode" value="1">6 slides per page</label>
-        </div>
+       
+
+
+
+
         <br>
       <input class="btn btn-dark btn-lg" type="submit" value=
       "Submit">  

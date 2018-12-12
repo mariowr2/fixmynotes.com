@@ -43,9 +43,22 @@ nav{
       margin-bottom: 30px;
     }
 
-    #radio-button{
+    #first-radio-button{
       margin-top: 10px;
       margin-bottom: 10px;
       font-size: 22px;
       margin-left: 5px;
     }
+
+    #radio-button{
+      margin-top: 10px;
+      margin-bottom: 10px;
+      font-size: 22px;
+      margin-left: 20px;
+    }
+
+    #image-in-radio-b{
+      margin-left: 20px;
+
+    }
+

@@ -321,18 +321,20 @@ def merge_slides_from_halves(left_side, right_side, mode):
 	merged_coordinates = None
 	#mode 1 has ordering: [top_left, right_left, middle_left, middle_right, bottom_left, bottom_right]
 	#mode 2 has ordering: [top_left, middle_left, bottom_left, top_right, middle_right, bottom_right]
-	if mode == 2:
+	if mode == 1:
 		merged_coordinates = [left_side[0],  left_side[1],  left_side[2],  right_side[0], right_side[1], right_side[2]]
 	else:
 		merged_coordinates = [left_side[0],  right_side[0],  left_side[1],  right_side[1], left_side[2], right_side[2]]
 	return merged_coordinates
 
 ################### MAIN PROCESSING FOR EACH PDF , called in a loop from main
-def process_6_slide_pdf(images, pdf_name, input_location, output_destination):
+def process_6_slide_pdf(images, pdf_name, input_location, output_destination, splitting_mode):
 	min_slide_width = 50
 	min_slide_height = 50
 	max_slide_width = 1050
 	max_slide_height = 840
+
+	print_debug_msg("Doing 6 slides, mode "+str(splitting_mode))
 	
 	#get the coordinates for all of the slides in the left half of the iamge
 	left_slides_coords = find_left_slides(images[0], pdf_name, min_slide_width, min_slide_height, max_slide_width, max_slide_height)
@@ -347,7 +349,7 @@ def process_6_slide_pdf(images, pdf_name, input_location, output_destination):
 		right_slides_found = True
 		if left_slides_found and right_slides_found: #proceed only if both the right and left side were found
 			
-			combined_slides = merge_slides_from_halves(left_side_slide_coords, right_side_slide_coords, 2)	
+			combined_slides = merge_slides_from_halves(left_side_slide_coords, right_side_slide_coords, splitting_mode)	
 
 
 			cropped_slide_images = crop_images(images,combined_slides, slide_size)
@@ -387,6 +389,7 @@ def process_4_slide_pdf(images, pdf_name, input_location, output_destination):
 	max_slide_width = 1050
 	max_slide_height = 840
 
+	print_debug_msg("Doing 4 slides")
 
 	upper_left_box_coordinates = find_upper_left_slide(images[0], pdf_name, min_slide_width, min_slide_height, max_slide_width, max_slide_height) # attempt to find an individual slides so that slides can be centered in their own page
 
@@ -425,8 +428,8 @@ def process_pdf(pdf_name, input_location, output_destination,splitting_mode=0):
 		if correct_dimensions and splitting_mode == 0:
 			return process_4_slide_pdf(images, pdf_name, input_location, output_destination)
 
-		if correct_dimensions and splitting_mode == 1:
-			filename = process_6_slide_pdf(images, pdf_name, input_location, output_destination)
+		if correct_dimensions and (splitting_mode == 1) or (splitting_mode == 2):
+			filename = process_6_slide_pdf(images, pdf_name, input_location, output_destination, splitting_mode)
 			print_debug_msg("filename is "+filename)
 			return filename
 		

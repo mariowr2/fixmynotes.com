@@ -70,6 +70,10 @@ def clear_uploaded_file(uploaded_filename):
 @app.route('/', methods=['GET', 'POST'])
 def upload_pdf():
 	if request.method == 'POST':
+
+		splitting_mode = request.form['mode'] # get the radio button selected
+		print "SPLITTING MODE SET TO "+str(splitting_mode)
+
 		if 'pdf' in request.files:
 			pdf_file = request.files['pdf']
 			if not pdf_file.filename == '':
@@ -77,7 +81,7 @@ def upload_pdf():
 					filename = secure_filename(pdf_file.filename) # make sure the filename is not dangerous		
 					if filename:
 						pdf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename)) #only save if the filename is safe
-						return redirect(url_for('uploaded_file',filename=filename))
+						return redirect(url_for('uploaded_file',filename=filename, splitting_mode=splitting_mode))
 					else:
 						flash("There seems to be something wrong with the name of the file you tried to upload.")	
 						return redirect(url_for('unsuccesful'))
@@ -95,10 +99,15 @@ def upload_pdf():
 
 
 #process pdf, verify successful and then send it to a custom url
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
+@app.route('/uploads/<splitting_mode>/<filename>')
+def uploaded_file(filename, splitting_mode):
 	
-	output_filename = split_pdf.process_pdf(filename, file_input_location_absolute, file_output_location_absolute) #use the pdf splitter module to do the work
+
+	print "sending file with mode "+str(splitting_mode)
+
+	output_filename = split_pdf.process_pdf(filename, file_input_location_absolute, file_output_location_absolute, int(splitting_mode)) #use the pdf splitter module to do the work
+	print_debug_msg("returned filename is "+output_filename)
+
 
 	if allowed_filename(output_filename):
 		return redirect(url_for('serve_file', output_filename=output_filename))

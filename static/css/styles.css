@@ -42,3 +42,10 @@ nav{
     #unsuccesful-banner{
       margin-bottom: 30px;
     }
+
+    #radio-button{
+      margin-top: 10px;
+      margin-bottom: 10px;
+      font-size: 22px;
+      margin-left: 5px;
+    }

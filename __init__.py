@@ -62,6 +62,7 @@ def clear_uploaded_file(uploaded_filename):
 	print_debug_msg("Deleting processed file "+uploaded_filename)
 	subprocess.call([script_path, file_input_location_absolute,uploaded_filename])
 
+
 #========================================================
 #	APP ROUTES
 #========================================================
@@ -125,7 +126,6 @@ def serve_file(output_filename):
 	uploaded_filename = output_filename[4:]
 	ending_char_index = len(uploaded_filename) -1
 	print_debug_msg(str(ending_char_index))
-
 	clear_uploaded_file(uploaded_filename) # delete the file that was uploaded
 	return send_from_directory(file_output_location_absolute, output_filename) #serve the processed file!
 

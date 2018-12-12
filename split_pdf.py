@@ -351,20 +351,20 @@ def process_6_slide_pdf(images, pdf_name, input_location, output_destination):
 			cropped_slide_images = crop_images(images,combined_slides, slide_size)
 
 
-			print_debug_msg("number of images cropped is "+str(len(cropped_slide_images)))
+			#print_debug_msg("number of images cropped is "+str(len(cropped_slide_images)))
 			
 
 			resized_images = resize_images(cropped_slide_images)
 
-			print_debug_msg("number of images resized is "+str(len(resized_images)))
+			#print_debug_msg("number of images resized is "+str(len(resized_images)))
 
-			for i in range(0, len(resized_images)):
-				resized_images[i].save("resize"+str(i)+".png", "PNG")
+			# for i in range(0, len(resized_images)):
+			# 	resized_images[i].save("resize"+str(i)+".png", "PNG")
 
 
 			output_document_name = create_new_document(pdf_name, resized_images,output_destination) # DOCUMENT PROCESSED SUCCESFULLY!
 
-			print_debug_msg("filename is "+output_document_name)
+			#print_debug_msg("filename is "+output_document_name)
 			return output_document_name
 			
 

@@ -9,6 +9,7 @@ import sys
 from logging.handlers import RotatingFileHandler
 from flask import request, jsonify
 from time import strftime
+import time
 
 import logging
 import traceback
@@ -114,13 +115,16 @@ def uploaded_file(filename, splitting_mode):
 	else:
 		flash(output_filename)
 		return redirect(url_for('unsuccesful'))
-	
+
 
 
 #serve the file with the new name as part of the url for
 @app.route('/fixed/<output_filename>')
 def serve_file(output_filename):
 	uploaded_filename = output_filename[4:]
+	ending_char_index = len(uploaded_filename) -1
+	print_debug_msg(str(ending_char_index))
+
 	clear_uploaded_file(uploaded_filename) # delete the file that was uploaded
 	return send_from_directory(file_output_location_absolute, output_filename) #serve the processed file!
 
@@ -134,17 +138,6 @@ def unsuccesful():
 @app.route('/error/')
 def error():
 	return render_template('error.html')
-
-
-@app.after_request
-def after_request(response):
-
-	if response.status_code != 500:
-		ts = strftime('[%Y-%b-%d %H:%M]')
-		logger.error(ts+" "+request.remote_addr+" "+request.method
-         	+" "+request.scheme+" "+request.full_path+" "+response.status)
-	return response
-		
 
 
 #====================================================
@@ -174,7 +167,4 @@ def handle_not_found(e):
 
 
 if __name__ == "__main__":
-	handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
-	logger.setLevel(logging.DEBUG)
-	logger.addHandler(handler)
 	app.run()

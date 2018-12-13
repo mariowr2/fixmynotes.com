@@ -16,7 +16,7 @@
   <div class="container">
     <div class="jumbotron">
       <h1><span class="inverse" id="unsuccesful-banner">Make notes more readable...</span></h1>
-      <p id="text-under-banner">Some courses give pdf notes with 4 slides in each page, this webapp uses Computer Vision to find the slides and then <b>output a pdf with a single slide per page</b>.</p>
+      <p id="text-under-banner">Some courses give pdf notes with multiple slides in each page, this webapp uses Computer Vision to find the slides and then <b>output a pdf with a single slide per page</b>.</p>
       <p id="text-under-banner">
        For now the program only works with symmetrically distributed slides. If slides do not maintain similar distance ratios to the document edges and/or other slides, the app might now work. On the other hand, slides can be anywhere as long as they maintain the mentioned ratios. This project is still in development! I Hope this helps someone's studying.
       </p>
@@ -28,8 +28,13 @@
         <p id="text-under-banner">How does a <b>single page</b> of your document look like?</p>
 
         <div class="row">
+
           <div class="radio">
-              <label id="first-radio-button"><input type="radio" name="mode" value="0" checked><img src="static/images/option0.svg" id="image-in-radio-b"></label>
+              <label id="first-radio-button"><input type="radio" name="mode" value="3" checked><img src="static/images/option3.svg" id="image-in-radio-b"></label>
+          </div>
+
+          <div class="radio">
+              <label id="radio-button"><input type="radio" name="mode" value="0"><img src="static/images/option0.svg" id="image-in-radio-b"></label>
           </div>
 
 

@@ -23,7 +23,7 @@ import traceback
 
 app = Flask(__name__) #create flask object
 app.secret_key = 'secret' #secret cookie key for flash!
-MAX_FILE_SIZE = 16 #size in MB
+MAX_FILE_SIZE = 25 #size in MB
 
 app.root_path = None
 #determine if the app is being run in DEBUG mode and update app root paths

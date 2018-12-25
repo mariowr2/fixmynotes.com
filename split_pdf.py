@@ -17,56 +17,10 @@ import os
 def print_debug_msg(msg):
 	print "************************ "+msg
 
-
-def find_box_using_opencv(image, min_width, min_height, max_width, max_height, debug):	#find a slide/box in an image (should only pass images that contain a single slide)
-	lower_bound_pixel = 0 #values used in colour thresholding
-	upper_bound_pixel = 5
-	opencv_image = numpy.array(image) # convert to open cv image
-
-	#open cv tings start
-	grayscale_img = cv2.cvtColor(opencv_image, cv2.COLOR_RGB2GRAY)
-
-	mask = cv2.inRange(grayscale_img, lower_bound_pixel,upper_bound_pixel) #find black elements (assuming black boxes)
-	contours = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]#find contours in mask
-
-	if len(contours) > 0:
-		slide_coords = max(contours, key = cv2.contourArea) #get the biggest contour
-		if len(slide_coords) == 4: #ensure precisely 4 coords, slides are squares
-
-				if debug:
-					cv2.drawContours(opencv_image, slide_coords, -1, (0,255,0), 3)
-					cv2.imwrite("contour.png", opencv_image)
-
-				slide_found_width = (slide_coords[2][0])[0] - (slide_coords[0][0])[0] #get width and heihgt
-				slide_found_height = (slide_coords[2][0])[1] - (slide_coords[0][0])[1]
-
-				#ensure found width and height is between allowed bounds
-				if(slide_found_width > min_width and slide_found_width < max_width and 
-					slide_found_height > min_height and slide_found_height < max_height):
-					return slide_coords
-	else:
-		return None
-
-#used when finding 4 slides
-def find_upper_left_slide(image, pdf_name, min_width, min_height, max_width, max_height):	#use the upper left quarter of an image to find the coordinates of a single slide/box
-
-	area = (0,0,image.size[0]/2, image.size[1]/2) # coordinates of upper left quadrant of image)
-	image_quadrant = image.crop(area) 
-
-	slide_box_coordinates = find_box_using_opencv(image_quadrant, min_width, min_height, max_width, max_height, False) #find the cords of the slide in the upper left quadrant
-
-	if slide_box_coordinates is None:
-		#print "Failed to find slide in left upper quadrant in file "+pdf_name
-		return None
-	else:
-		#print "Success finding slide in left upper quadrant in file "+pdf_name
-		return slide_box_coordinates
-
-
-#return the three biggest 4-point contours given a list of contours
-def get_three_largest_contours(contours):
+#return the n largest 4-point contours given a list of contours
+def get_n_largest_contours(contours, n):
 	
-	three_largest_contours = []
+	n_largest_contours = []
 	indexes_with_more_than_four_points = []
 
 	# get the indexes of contours with more than 4 points, since they are not slides! 
@@ -74,200 +28,53 @@ def get_three_largest_contours(contours):
 		if len(contours[i]) > 4:
 			indexes_with_more_than_four_points.append(i)
 
-
-	#delete the indexes of the contours
+	#delete the indexes of the contours iwth more than 4 points
 	for index in indexes_with_more_than_four_points:
 		if index < len(contours):
 			del contours[index]
 
-	#sort the remaining list by area and append the first three contours
+	#sort the remaining list by area and create a list with the n largest contours
 	sorted_contours = sorted(contours, key=lambda x: cv2.contourArea(x))
-	three_largest_contours.append(sorted_contours[0])
-	three_largest_contours.append(sorted_contours[1])
-	three_largest_contours.append(sorted_contours[2])	
+	for i in range(0, n):
+		n_largest_contours.append(sorted_contours[i])	
 
-	return three_largest_contours
+	return n_largest_contours
 
 
-#return the contour coordinates of all 3 slides in the left half of the image
-def find_left_slides_using_opencv(image, min_width, min_height, max_width, max_height):
+#return the contour coordinates of all #number of slides in an image
+def get_slides_coordinates(image, min_size, max_size, number_of_slides):
 	
 	lower_bound_pixel = 0 #values used in colour thresholding
 	upper_bound_pixel = 5
 	opencv_image = numpy.array(image) # convert to open cv image
 	second_image = opencv_image.copy()
-
-	min_slide_area = min_width * min_height
-	max_slide_area = max_width * max_height
-
 	#open cv tings start
 	grayscale_img = cv2.cvtColor(opencv_image, cv2.COLOR_RGB2GRAY)
-
 	mask = cv2.inRange(grayscale_img, lower_bound_pixel,upper_bound_pixel) #find black elements (assuming black boxes)
 	contours = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]#find contours in mask
 
-	if len(contours) > 2: #make sure at least 3 contours were found in the image
-		three_largest_contours = get_three_largest_contours(contours)  #get the three largest contours
+	if len(contours) >= number_of_slides: #only continue if the contours found are at least equal to the expected amount of slides to be found
+		largest_contours = get_n_largest_contours(contours, number_of_slides)  #we are interested in the largest (number of slides) contours
+		return largest_contours
 		
-
-		#check that the returned contours are inside the allowed bounds UGLY HACK
-		slides_inside_bounds = (cv2.contourArea(three_largest_contours[0]) > min_slide_area and cv2.contourArea(three_largest_contours[0]) < max_slide_area)
-		slides_inside_bounds = slides_inside_bounds and (cv2.contourArea(three_largest_contours[1]) > min_slide_area and cv2.contourArea(three_largest_contours[1]) < max_slide_area)
-		slides_inside_bounds = slides_inside_bounds and (cv2.contourArea(three_largest_contours[2]) > min_slide_area and cv2.contourArea(three_largest_contours[2]) < max_slide_area)
-		
-		if slides_inside_bounds:
-			return three_largest_contours
-		else:
-			return None
+		#========================================================================
+		# MISSING CHECK FOR SLIDES BEING IN ALOWED MIN AND MAX DIMENSIONS!
+		#=======================================================================
 	else:
 		return None #return empty list
 
-
-#used when finding 6 slides total, returns the coordinates of all slides in the left half of the image
-def find_left_slides(image, pdf_name, min_width, min_height, max_width, max_height):
-
-	area = (0,0,image.size[0]/2, image.size[1])
-	#area = (image.size[0]/2,0,image.size[0], image.size[1]) #right half of image
-	image_quadrant = image.crop(area)
-	left_slide_coordinates = find_left_slides_using_opencv(image_quadrant, min_width, min_height, max_width, max_height)
-	return left_slide_coordinates
-
-
-
-
-
-def calculate_all_slides_coords(upper_left_coords, pdf_size): #calculate one pair of coordinates for all boxes AND width and height of each box
-
-	quadrant_size = (pdf_size[0]/2, pdf_size[1]/2)	
-	box_width = upper_left_coords[2][0][0] - upper_left_coords[0][0][0]
-	box_height = upper_left_coords[2][0][1] - upper_left_coords[0][0][1]
-
-	#first get measurements relative to the distance of the found box and the edges of the quadrants
-	left_x_distance = upper_left_coords[0][0][0]#(x coordinate of left edge)
-	right_x_distance = quadrant_size[0] - upper_left_coords[2][0][0]# difference between x corordinate of right edge and edge of quadrant
-
-	y_top_distance = upper_left_coords[0][0][1]# distance from top of box to upper edge of quadrant
-	y_lower_distance = quadrant_size[1] - upper_left_coords[2][0][1] # difference between y coordinate of lower edge and the height of the quadrany
-
-	# coordinates of upper left box
-	upper_left_quadrant_x = upper_left_coords[0][0][0] #upper left box first
-	upper_left_quadrant_y = upper_left_coords[0][0][1]
-	
-	boxes_coords = [[upper_left_quadrant_x, upper_left_quadrant_y]] # add upper left box
-
-	# coordinates of upper right box
-	upper_right_cuadrant_x = quadrant_size[0] + right_x_distance #x coord of upper right quadrant, upper left edge
-	upper_right_cuadrant_y = y_top_distance #y coord of upper right quadrant , upper left edge
-	boxes_coords.insert(1,[upper_right_cuadrant_x, upper_right_cuadrant_y])
-
-	#coordinates of lower left box
-	lower_left_cuadrant_x = upper_left_quadrant_x
-	lower_left_cuadrant_y = quadrant_size[1] + y_lower_distance
-	boxes_coords.insert(2,[lower_left_cuadrant_x,lower_left_cuadrant_y])
-
-	#coordinates of lower right box
-	lower_right_cuadrant_x = upper_right_cuadrant_x
-	lower_right_cuadrant_y = lower_left_cuadrant_y
-	boxes_coords.insert(3,[lower_right_cuadrant_x, lower_right_cuadrant_y])
-
-	return boxes_coords, (box_width, box_height)
-
-
-#calculate the rest of the coordinates using the coordinates already acquired
-def calculate_remaining_slides_coordinates(left_half_slides_coords, pdf_size):
-
-	left_boxes_coords = None # stores the top left corner of all 6 slides in the document
-	right_boxes_coords = None
-
-	quadrant_size = (pdf_size[0]/2, pdf_size[1])
-
-	#calculate the width and height for all slides
-	box_width = left_half_slides_coords[0][3][0][0] - left_half_slides_coords[0][0][0][0]
-	box_height = left_half_slides_coords[0][2][0][1] - left_half_slides_coords[0][0][0][1]
-
-	#calculate the distance from each slide to right borders of the document
-	box_distance_right_border = quadrant_size[0] - left_half_slides_coords[0][3][0][0]
-
-
-	#first dump all top left coords of the 3 slides that have been found already
-	left_boxes_coords = [[ left_half_slides_coords[0][0][0][0], left_half_slides_coords[0][0][0][1]]]
-	left_boxes_coords.insert(1, [left_half_slides_coords[1][0][0][0], left_half_slides_coords[1][0][0][1]])
-	left_boxes_coords.insert(2, [left_half_slides_coords[2][0][0][0], left_half_slides_coords[2][0][0][1]])
-
-
-	#sort coordinates in ascending order depending on their y coordinate! ; very important
-	left_boxes_coords = sorted(left_boxes_coords,key=lambda l:l[1])
-
-	
-	#now calculate the coordinates on the other half of the image
-
-	#first top right slide, only need to calculate the x once!
-	
-	#top_right_slide_x = left_boxes_coords[0][0] + box_width +(2 * box_distance_right_border) 
-	top_right_slide_x = pdf_size[0]/2 + box_distance_right_border
-	top_right_slide_y = left_boxes_coords[0][1]
-	right_boxes_coords = [[top_right_slide_x, top_right_slide_y]]
-
-	#middle right slide
-	middle_right_slide_y = left_boxes_coords[1][1]
-	right_boxes_coords.insert(1, [top_right_slide_x, middle_right_slide_y])
-
-	#bottom right slide
-	bottom_right_slide_y = left_boxes_coords[2][1]
-	right_boxes_coords.insert(2, [top_right_slide_x, bottom_right_slide_y])
-
-	print left_boxes_coords
-	print right_boxes_coords
-	
-
-	return left_boxes_coords, right_boxes_coords, (box_width, box_height)
-
-
-def extract_images_from_pdf(pdf_file_path):	# use the pdf2image library to convert every page in the pdf to an image
-	
+# use the pdf2image library to convert every page in the pdf to an image
+def extract_images_from_pdf(pdf_file_path):	
 	images = None
-
 	try:
 		images = convert_from_path(pdf_file_path) #get the images
 	except:
 		print "Error on pdf \""+pdf_name+"\", could not split file " #catch exception
-
 	return images
 
-
-def verify_slide(pdf_image,slide_coords,slide_size, slide_number): #verify the pixels found with open cv and ensure these have black pixels at coordinates
-
-	opencv_image = numpy.array(pdf_image) # convert to open cv image
-	grayscale_img = cv2.cvtColor(opencv_image, cv2.COLOR_RGB2GRAY)
-	correct_coords = [False, False, False, False] #represents if the coords of each slide truly represent its location
-
-	#check that all coordinates have a black pixel in the image
-	#black pixel means that the black edge of a slide is at the coordinates
-	for i in range(0,slide_number):
-		if(grayscale_img.item(slide_coords[i][1],slide_coords[i][0]) == 0) :   #check left top corner
-			if(grayscale_img.item((slide_coords[i][1] + slide_size[1]) -1,(slide_coords[i][0] + slide_size[0] -1 )) == 0):
-				correct_coords[i] = True
-
-
-	if slide_number == 4:
-		if(correct_coords[0] and correct_coords[1] and correct_coords[2] and correct_coords[3]): #if all coords are accurate then just return a single true
-			return [True]
-		else:
-			return correct_coords
-	if slide_number == 3:
-		if(correct_coords[0] and correct_coords[1] and correct_coords[2]):
-			return [True]
-		else:
-			return correct_coords
-	else:
-		return correct_coords
-
-
-	
-def crop_images(images, coords, size):  # crop all images once the coordinates are known, crop only the "individual slides"
+# crop all images once the coordinates are known, crop only the "individual slides"
+def crop_images(images, coords, size):  
 	cropped_images = []
-
-	#for each image, do the 4 crops (since 4 slides per image)
 	print "length of coords "+str(len(coords))
 	print "number of images "+str(len(images))
 
@@ -279,8 +86,8 @@ def crop_images(images, coords, size):  # crop all images once the coordinates a
 	return cropped_images
 
 
-
-def create_new_document(filename, slides, output_destination): #create the output document
+#create the output document
+def create_new_document(filename, slides, output_destination): 
 	
 	output_filename = "new_"+filename
 	working_dir_path = output_destination+output_filename # get full path of file
@@ -298,7 +105,8 @@ def create_new_document(filename, slides, output_destination): #create the outpu
 	c.save() # save the output!
 	return output_filename
 
-def resize_images(images): #resize all images before they are included in the output	
+#resize all images before they are included in the output
+def resize_images(images): 	
 	if images is not None:
 		resized_images = []
 		basewidth = 500   #moidy this value to change image size!
@@ -308,7 +116,6 @@ def resize_images(images): #resize all images before they are included in the ou
 		for image in images: # resize all images
 			image = image.resize((basewidth, height), PIL.Image.ANTIALIAS)
 			resized_images.append(image)
-
 		return resized_images
 	else:
 		return None
@@ -331,7 +138,7 @@ def merge_slides_from_halves(left_side, right_side, mode):
 		merged_coordinates = [left_side[0],  right_side[0],  left_side[1],  right_side[1], left_side[2], right_side[2]]
 	return merged_coordinates
 
-#zipper merge two lists, hopefully staying in bounds
+#zipper merge two lists
 def merge_images(list_one, list_two):
 	merged_list = []
 	for i in range(0, len(list_one)):
@@ -339,9 +146,34 @@ def merge_images(list_one, list_two):
 		merged_list.append(list_two[i])
 	return merged_list
 
+#extract from a list of 4 point contours only the top left x and y of every contour and return it in a 2d array
+def numpy_to_two_d_array(numpy_array):
+	two_d_array = []
+	coordinate_pair = []
+	for i in range(0,len(numpy_array)):
+		coordinate_pair = [(numpy_array[i][0][0])[0], (numpy_array[i][0][0])[1]]
+		two_d_array.append(coordinate_pair)
+	return two_d_array
+
+#sort the given two d array and sort it by ascending order of y coordinate
+def sort_by_asc_y(coord_list):
+	sorted_list = sorted(coord_list,key=lambda l:l[1])
+	return sorted_list
+
+#given an ndimensional numpy array of coordinates return the width and height of the obj represented by the coordinates
+def get_slide_size(coords_list):
+	obj_coordinates = coords_list[0] #single out only one set of coords
+	width = obj_coordinates[2][0][0] - obj_coordinates[0][0][0]
+	height = obj_coordinates[2][0][1] - obj_coordinates[0][0][1]
+	return (width, height)
+
+
+
 #=============================================================
 # MAIN PROCESSING FOR EACH KIND OF PDF
 #=============================================================
+
+
 def process_2_slide_pdf(images, pdf_name, input_location, output_destination):
 	min_slide_width = 200
 	min_slide_height = 200
@@ -391,9 +223,7 @@ def process_2_slide_pdf(images, pdf_name, input_location, output_destination):
 			print "All slides found successfully in " + pdf_name
 
 			cropped_slide_images = crop_images(images, slide_coords, (upper_slide_width, upper_slide_height))
-			resized_images = resize_images(cropped_slide_images)
-			output_document_name = create_new_document(pdf_name, resized_images,output_destination) # DOCUMENT PROCESSED SUCCESFULLY!
-			return output_document_name
+			return cropped_slide_images
 
 
 		else:
@@ -418,95 +248,112 @@ def process_2_slide_pdf(images, pdf_name, input_location, output_destination):
 			resized_lower_images = resize_images(cropped_lower_slides_images)
 
 			merged_images = merge_images(resized_upper_images, resized_lower_images)
-			output_document_name = create_new_document(pdf_name, merged_images, output_destination)
-			return output_document_name
+			return merged_images
 	else:
 		return "Failed to find slides in document."
 
 
-
-def process_6_slide_pdf(images, pdf_name, input_location, output_destination, splitting_mode):
-	min_slide_width = 50
-	min_slide_height = 50
-	max_slide_width = 1050
-	max_slide_height = 840
-
-	print_debug_msg("Doing 6 slides, mode "+str(splitting_mode))
+def split_vertically(images, pdf_name, number_of_slides_in_half, min_slide_dimensions, max_slide_dimensions):
 	
-	#get the coordinates for all of the slides in the left half of the iamge
-	left_slides_coords = find_left_slides(images[0], pdf_name, min_slide_width, min_slide_height, max_slide_width, max_slide_height)	
-	if left_slides_coords:
+	print_debug_msg("CONSTRUCCION   Doing "+str((2*number_of_slides_in_half))+" slides...")
 
-		left_side_slide_coords, right_side_slide_coords, slide_size = calculate_remaining_slides_coordinates(left_slides_coords, images[0].size)
-		left_slides_found = True
-		right_slides_found = True
-		if left_slides_found and right_slides_found: #proceed only if both the right and left side were found
-			combined_slides = merge_slides_from_halves(left_side_slide_coords, right_side_slide_coords, splitting_mode)	
-			cropped_slide_images = crop_images(images,combined_slides, slide_size)
-			resized_images = resize_images(cropped_slide_images)
-			output_document_name = create_new_document(pdf_name, resized_images,output_destination) # DOCUMENT PROCESSED SUCCESFULLY!
-			return output_document_name
-		else:
-			return "Program was unable to verify that all slides were found"
-	else:
-		return "Failed to find 3 slides on the image."
+	#first crop image in half and find coordinates of the slides in each half
+	left_crop_area = (0,0,images[0].size[0]/2, images[0].size[1])
+	image_left_half = images[0].crop(left_crop_area)
 
-def process_4_slide_pdf(images, pdf_name, input_location, output_destination):
-	
-	min_slide_width = 200
-	min_slide_height = 200
-	max_slide_width = 1050
-	max_slide_height = 840
+	right_crop_area = (images[0].size[0]/2, 0, images[0].size[0], images[0].size[1])
+	image_right_half = images[0].crop(right_crop_area)
 
-	print_debug_msg("Doing 4 slides")
+	#get coordinates of slides in both halves
+	left_half_slide_coordinates = get_slides_coordinates(image_left_half, min_slide_dimensions, max_slide_dimensions, number_of_slides_in_half)
+	right_half_slide_coordinates = get_slides_coordinates(image_right_half, min_slide_dimensions, max_slide_dimensions, number_of_slides_in_half)
 
-	upper_left_box_coordinates = find_upper_left_slide(images[0], pdf_name, min_slide_width, min_slide_height, max_slide_width, max_slide_height) # attempt to find an individual slides so that slides can be centered in their own page
+	#get width and heght for left and right slides
+	left_slides_size = get_slide_size(left_half_slide_coordinates)
+	right_slides_size = get_slide_size(right_half_slide_coordinates)
 
-	if(upper_left_box_coordinates is not None): #only proceed if coordinates were found
-		
-		slide_coordinates, slide_dimentions = calculate_all_slides_coords(upper_left_box_coordinates, images[0].size) #get all cords from all slides per image
-		#slides_found = verify_slide(images[0], slide_coordinates, slide_dimentions, 4) #verify if coordinates are accurate and slides are there
-		slides_found = [True]
-		if(len(slides_found) == 1):
+	#convert numpy contours arrray to two dimensional array
+	left_half_slide_coordinates = numpy_to_two_d_array(left_half_slide_coordinates)
+	right_half_slide_coordinates = numpy_to_two_d_array(right_half_slide_coordinates)
 
-			print "All slides found successfully in " + pdf_name
-			cropped_slide_images = crop_images(images, slide_coordinates, slide_dimentions)
-			resized_images = resize_images(cropped_slide_images)
-			output_document_name = create_new_document(pdf_name, resized_images,output_destination) # DOCUMENT PROCESSED SUCCESFULLY!
-			return output_document_name
+	#sort list of contours by height so we are comparing the correct coordinates from both halves
+	left_half_slide_coordinates = sort_by_asc_y(left_half_slide_coordinates)
+	right_half_slide_coordinates = sort_by_asc_y(right_half_slide_coordinates)
 
-		else:
-			return "Program was unable to verify that all slides were found"
-	
-	else:
-		return "Failed to find individual slide."
+	left_slide_images = []
+	for image in images:
+		left_image_half = image.crop(left_crop_area)
+		left_slide_images.append(left_image_half)
 
-		
+	right_slide_images = []
+	for image in images:
+		right_image_half = image.crop(right_crop_area)
+		right_slide_images.append(right_image_half)
+
+	#crop and resize
+	cropped_left_side_slide_images = crop_images(left_slide_images, left_half_slide_coordinates, left_slides_size)
+	cropped_right_side_slide_images = crop_images(right_slide_images, right_half_slide_coordinates, right_slides_size)
+
+	resized_left_side_slide_images = resize_images(cropped_left_side_slide_images)
+	resized_right_side_slide_images = resize_images(cropped_right_side_slide_images)
+
+	#merge both image lists and create the output document
+	merged_images = merge_images(cropped_left_side_slide_images, cropped_right_side_slide_images)
+	return merged_images
+
+
+# TODOOOOOOOO
+# verificar que el orden de las slides es correcto
+# pasar de una llamda a dos llamadas a split vertically
+# agregar chekcs de minimum size max size, defensive programming
+# agreagar caso especiales de ordenamiento de slides diferente como en 6
+# poner safety a todos los metodos
+# testear
+
+
+
 
 def process_pdf(pdf_name, input_location, output_destination,splitting_mode=0):
 
-	images = extract_images_from_pdf(input_location+pdf_name) # get all pages in pdf as images
+	images = extract_images_from_pdf(input_location+pdf_name) # get all pages in pdf as images	
+	cropped_slide_images = None #cropped images with a slide in every image
 	
+	FOUR_SLIDES = 0
+	SIX_SLIDES_FIRST_ORDER = 1
+	SIX_SLIDES_SECOND_ORDER = 2
+	TWO_SLIDES = 3
+
 	if (images and len(images) > 0): #verify that the image extraction was successful
+		correct_dimensions = assert_document_dimensions(images[0].size[0], images[0].size[1]) # assert correct document size
+		if correct_dimensions:
+			if splitting_mode == FOUR_SLIDES:
+				cropped_slide_images =  process_4_slide_pdf(images, pdf_name, input_location, output_destination)
+			if (splitting_mode == SIX_SLIDES_FIRST_ORDER) or (splitting_mode == SIX_SLIDES_SECOND_ORDER):
+				cropped_slide_images = process_6_slide_pdf(images, pdf_name, input_location, output_destination, splitting_mode) #send the pdf to the relevant processing
+			if splitting_mode == TWO_SLIDES:
+				cropped_slide_images = process_2_slide_pdf(images, pdf_name, input_location, output_destination)
 
-		correct_dimensions = assert_document_dimensions(images[0].size[0], images[0].size[1]) # get size of document
 
-		if correct_dimensions and splitting_mode == 0:
-			return process_4_slide_pdf(images, pdf_name, input_location, output_destination)
+			####UNDER CONSTRUCTION
+			if splitting_mode == 10:
+				cropped_slide_images = split_vertically(images, pdf_name, 2, (100, 100), (800,800))
 
-		if correct_dimensions and (splitting_mode == 1) or (splitting_mode == 2):
-			return process_6_slide_pdf(images, pdf_name, input_location, output_destination, splitting_mode)
+			
 
-		if correct_dimensions and splitting_mode == 3:
-			return process_2_slide_pdf(images, pdf_name, input_location, output_destination)
-		
+			#finish the document: resize images and paste them in the output document
+			if cropped_slide_images is not None:
+				resized_images = resize_images(cropped_slide_images) # increase size of cropped images
+				output_document_name = create_new_document(pdf_name, resized_images,output_destination)  #write the output document
+				return output_document_name
+			else:
+				return cropped_slide_images #will be string giving details about encountered errror
 		else:
-			return "Incorrect dimensions or incorrect mode"
+			return "Unsupported document size. Only A4 letter size is supported."
 	else:
-		return "Failed to extract images from pdf"
+		return "Failed to extract images from pdf."
+
 	
 
-	return "epic fail"
 
 	
 

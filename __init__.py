@@ -25,7 +25,7 @@ if (len(sys.argv) > 1) and (sys.argv[1] == "DEBUG"):
 	logging.getLogger(__name__).addHandler(console)
 	logger.info("Running application in debug mode...")
 else:
-	app.root_path = '/var/www/Fix/Fix'
+	app.root_path = '/home/fixmynotes/fixmynotes.com'
 	os.environ["FLASK_ENV"] = "production"
 	logger.info("Running application in production mode...")
 

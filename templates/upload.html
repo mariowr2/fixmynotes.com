@@ -1,67 +1,68 @@
 <html>
+
 <head>
-	<title>Home</title>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+  <title>fixmynotes</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+    integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
   <link rel="stylesheet" href="static/css/styles.css">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 
 <body>
-  <a href="https://github.com/mariowr2/fixmynotes.com"><img style="position: absolute; top: 0; right: 0; border: 0;z-index:9999" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+  <a href="https://github.com/mariowr2/fixmynotes.com"><img
+      style="position: absolute; top: 0; right: 0; border: 0;z-index:9999"
+      src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
   <nav class="navbar navbar-light bg-light">
     <a class="navbar-brand" href="//fixmynotes.com">
-        <span width="30" height="30" align-top alt="">F</span>
-        ixMyNotes.com
+      <span width="30" height="30" align-top alt="">F</span>
+      ixMyNotes.com
     </a>
   </nav>
   <div class="container">
     <div class="jumbotron">
-      <h1><span class="inverse" id="unsuccesful-banner">Make notes more readable...</span></h1>
-      <p id="text-under-banner">Some courses give pdf notes with multiple slides in each page, this webapp uses Computer Vision to find the slides and then <b>output a pdf with a single slide per page</b>.</p>
+      <h1><span class="inverse" id="unsuccesful-banner">Make notes more readable!</span></h1>
+      <p id="text-under-banner">Some courses give pdf notes with multiple slides in each page, this webapp uses Computer
+        Vision to find the slides and then <b>output a pdf with a single slide per page</b>.</p>
       <p id="text-under-banner">
-       This project is still in development and will surely fail to "fix" notes on some cases. I hope this helps someone's studying!
+        This project is still in development and will surely fail to "fix" notes on some cases. I hope this helps
+        someone's studying!
       </p>
     </div>
     <form method=POST enctype=multipart/form-data>
       <input type=file name=pdf style="cursor:pointer">
-        <br>
-        
-        <p id="text-under-banner">How does a <b>single page</b> of your document look like?</p>
-
-        <div class="row">
-
-          <div class="radio">
-              <label id="first-radio-button"><input type="radio" name="mode" value="3" checked><img src="static/images/option3.svg" id="image-in-radio-b"></label>
-          </div>
-
-          <div class="radio">
-              <label id="radio-button"><input type="radio" name="mode" value="0"><img src="static/images/option0.svg" id="image-in-radio-b"></label>
-          </div>
-
-
-          <div class="radio">
-              <label id="radio-button"><input type="radio" name="mode" value="1"><img src="static/images/option1.svg" id="image-in-radio-b"></label>
-          </div>
-
-          <div class="radio">
-              <label id="radio-button"><input type="radio" name="mode" value="2"><img src="static/images/option2.svg" id="image-in-radio-b"></label>
-          </div>
-
+      <br>
+      <p id="text-under-banner">How does a <b>single page</b> of your document look like?</p>
+      <div class="row">
+        <div class="radio">
+          <label id="first-radio-button"><input type="radio" name="mode" value="3" checked><img
+              src="static/images/option3.svg" id="image-in-radio-b"></label>
         </div>
-       
-
-
-
-
-        <br>
-      <input class="btn btn-dark btn-lg" type="submit" value=
-      "Submit">  
+        <div class="radio">
+          <label id="radio-button"><input type="radio" name="mode" value="0"><img src="static/images/option0.svg"
+              id="image-in-radio-b"></label>
+        </div>
+        <div class="radio">
+          <label id="radio-button"><input type="radio" name="mode" value="1"><img src="static/images/option1.svg"
+              id="image-in-radio-b"></label>
+        </div>
+        <div class="radio">
+          <label id="radio-button"><input type="radio" name="mode" value="2"><img src="static/images/option2.svg"
+              id="image-in-radio-b"></label>
+        </div>
+      </div>
+      <br>
+      <input class="btn btn-dark btn-lg" type="submit" value="Submit">
     </form>
   </div>
-	
-
-
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+    integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+    integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+    crossorigin="anonymous"></script>
 </body>
+
 </html>

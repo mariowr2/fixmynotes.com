@@ -5,18 +5,25 @@ This flask webapp  attempts to do away with "n slides in a single slide" notes s
 # Demo
 ![](fixmynotes-demo.gif)
 
-## Run the program and server locally
-To setup the project, give execution permission  ```setup.sh``` :
+## Windows users
+This program runs on Ubuntu. If you are on windows, [install the Windows Subsystem for Linux](https://ubuntu.com/wsl).
+
+## Run the project locally
+This program runs on python2.7 . Before running `setup.sh` ensure this path exists in your system `/usr/bin/python2.7`. You can do so by running the following comand:
 ~~~~
-$ chmod +x setup.sh
+$ /usr/bin/python2.7
 ~~~~
-Then run ```setup.sh```:
+If the python console comes up, then your python installation is in the correct place. If your python installation is not on `/usr/bin/python2.7`, change the following line from `setup.sh` to point to your installation location:
+~~~
+#change this line if necessary 
+virtualenv virtual_env --python=/usr/bin/python2.7 
+~~~
+
+Once you know your python installation location is correct, run ```setup.sh```:
 ~~~~
 $ sudo ./setup.sh
 ~~~~
-```setup.sh``` script creates a virtual environment and installs all dependencies. Note that OpenCV 2 must be installed previously for the setup to be complete, I used this [script](https://gist.github.com/arthurbeggs/06df46af94af7f261513934e56103b30) to install OpenCV on Ubuntu 16.04.  
-
-Before running the program, activate the virtual environment created by the setup script :
+```setup.sh``` script creates a virtual environment and installs all dependencies. The script will take some time because it builds OpenCV.  Once the script is done, activate the virtual environment created by the setup script :
 ~~~~
 $ source virtual_env/bin/activate
 ~~~~

@@ -18,18 +18,18 @@ app = Flask(__name__)
 app.secret_key = 'secret'
 MAX_FILE_SIZE = 25 #size in MB
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(JournalHandler())
+logger.addHandler(logging.StreamHandler())
+
 if (len(sys.argv) > 1) and (sys.argv[1] == "DEBUG"):
 	app.root_path = os.getcwd()
 	os.environ["FLASK_ENV"] = "development"
-	console = logging.StreamHandler()
-	console.setLevel(logging.INFO)
-	logging.getLogger(__name__).addHandler(console)
 	logger.info("Running application in debug mode...")
 else:
 	app.root_path = '/home/fixmynotes/fixmynotes.com/'
 	os.environ["FLASK_ENV"] = "production"
-	logger.setLevel(logging.INFO)
-	logger.addHandler(JournalHandler())
 	logger.info("Running application in production mode...")
 
 app.config['UPLOAD_FOLDER'] = str(app.root_path) + "/static/uploaded_files"  

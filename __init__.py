@@ -116,6 +116,7 @@ def uploaded_file(filename, splitting_mode):
 		call_pdf_splitter_subprocess(filename, splitting_mode)
 	except Exception:
 		logger.error("error when calling the subprocess, showing error template")
+		flash("Your file might be too many pages long.")
 		return redirect(url_for('unsuccesful'))
 
 	output_filename = "new_"+filename

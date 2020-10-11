@@ -17,7 +17,7 @@ Pillow==6.1.0
 pycairo==1.16.2
 pycrypto==2.6.1
 pygobject==3.26.1
-pyxdg==0.25
+pyxdg==0.26
 reportlab==3.5.23
 SecretStorage==2.3.1
 six==1.11.0

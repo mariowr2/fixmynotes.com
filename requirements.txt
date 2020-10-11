@@ -25,3 +25,5 @@ systemd-python==234
 uWSGI==2.0.18
 virtualenv==16.6.1
 Werkzeug==0.15.4
+backports.tempfile==1.0
+backports.weakref==1.0.post1

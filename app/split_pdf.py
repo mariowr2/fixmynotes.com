@@ -8,6 +8,7 @@ from reportlab.lib import colors
 from reportlab.platypus.flowables import Image
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
+from backports import tempfile
 import StringIO
 import cv2
 import numpy
@@ -231,7 +232,8 @@ def extract_images_from_pdf(pdf_file_path):	# use the pdf2image library to conve
 	images = None
 
 	try:
-		images = convert_from_path(pdf_file_path) #get the images
+		with tempfile.TemporaryDirectory() as path:
+			images = convert_from_path(pdf_file_path, output_folder=path)
 	except:
 		logger.error("Error on pdf \""+pdf_file_path+"\", could not split file") #catch exception
 

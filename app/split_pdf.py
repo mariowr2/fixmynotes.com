@@ -3,6 +3,7 @@
 from pdf2image import convert_from_path
 import PIL
 from PIL import Image, ImageDraw
+from systemd.journal import JournalHandler
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.platypus.flowables import Image
@@ -13,9 +14,12 @@ import cv2
 import numpy
 import sys
 import os
+import logging
 
-def print_debug_msg(msg):
-	print "************************ "+msg
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(JournalHandler())
+logger.addHandler(logging.StreamHandler())
 
 
 def find_box_using_opencv(image, min_width, min_height, max_width, max_height, debug):	#find a slide/box in an image (should only pass images that contain a single slide)
@@ -56,10 +60,10 @@ def find_upper_left_slide(image, pdf_name, min_width, min_height, max_width, max
 	slide_box_coordinates = find_box_using_opencv(image_quadrant, min_width, min_height, max_width, max_height, False) #find the cords of the slide in the upper left quadrant
 
 	if slide_box_coordinates is None:
-		#print "Failed to find slide in left upper quadrant in file "+pdf_name
+		logger.warning("Failed to find slide in left upper quadrant in file "+pdf_name)
 		return None
 	else:
-		#print "Success finding slide in left upper quadrant in file "+pdf_name
+		logger.warning("Success finding slide in left upper quadrant in file "+pdf_name)
 		return slide_box_coordinates
 
 
@@ -214,11 +218,7 @@ def calculate_remaining_slides_coordinates(left_half_slides_coords, pdf_size):
 
 	#bottom right slide
 	bottom_right_slide_y = left_boxes_coords[2][1]
-	right_boxes_coords.insert(2, [top_right_slide_x, bottom_right_slide_y])
-
-	print left_boxes_coords
-	print right_boxes_coords
-	
+	right_boxes_coords.insert(2, [top_right_slide_x, bottom_right_slide_y])	
 
 	return left_boxes_coords, right_boxes_coords, (box_width, box_height)
 
@@ -230,7 +230,7 @@ def extract_images_from_pdf(pdf_file_path):	# use the pdf2image library to conve
 	try:
 		images = convert_from_path(pdf_file_path) #get the images
 	except:
-		print "Error on pdf \""+pdf_name+"\", could not split file " #catch exception
+		logger.error("Error on pdf \""+pdf_name+"\", could not split file") #catch exception
 
 	return images
 
@@ -268,8 +268,8 @@ def crop_images(images, coords, size):  # crop all images once the coordinates a
 	cropped_images = []
 
 	#for each image, do the 4 crops (since 4 slides per image)
-	print "length of coords "+str(len(coords))
-	print "number of images "+str(len(images))
+	logger.info("length of coords "+str(len(coords)))
+	logger.info("number of images "+str(len(images)))
 
 	for image in images:
 		for i in range(0, len(coords)):
@@ -348,7 +348,7 @@ def process_2_slide_pdf(images, pdf_name, input_location, output_destination):
 	max_slide_width = 1050
 	max_slide_height = 840
 
-	print_debug_msg("Doing 2 slides...")
+	logger.info("Doing 2 slides...")
 
 	#first crop the image in the two halves
 	area_upper_half= (0,0,images[0].size[0], images[0].size[1]/2) # coordinates of upper left quadrant of image)
@@ -379,7 +379,7 @@ def process_2_slide_pdf(images, pdf_name, input_location, output_destination):
 
 
 		if (upper_slide_x == lower_slide_x) and (upper_slide_y == lower_slide_y) and (upper_slide_width == lower_slide_width) and (upper_slide_height == lower_slide_height):
-			print_debug_msg("Symmetry <3")
+			logger.info("Symmetry <3")
 
 			slide_coords = [[upper_slide_x, upper_slide_y]]
 
@@ -388,7 +388,7 @@ def process_2_slide_pdf(images, pdf_name, input_location, output_destination):
 			lower_slide_y = (images[0].size[1]/2) + distance_to_lower_bottom #only need to calculate y, x will be the same		
 			slide_coords.insert(2, [upper_slide_x, lower_slide_y])
 
-			print "All slides found successfully in " + pdf_name
+			logger.info("All slides found successfully in " + pdf_name)
 
 			cropped_slide_images = crop_images(images, slide_coords, (upper_slide_width, upper_slide_height))
 			resized_images = resize_images(cropped_slide_images)
@@ -397,7 +397,7 @@ def process_2_slide_pdf(images, pdf_name, input_location, output_destination):
 
 
 		else:
-			print_debug_msg("Not symmetrical")
+			logger.info("Not symmetrical")
 
 			#crop all images in half
 			upper_half_images = []
@@ -431,7 +431,7 @@ def process_6_slide_pdf(images, pdf_name, input_location, output_destination, sp
 	max_slide_width = 1050
 	max_slide_height = 840
 
-	print_debug_msg("Doing 6 slides, mode "+str(splitting_mode))
+	logger.info("Doing 6 slides, mode "+str(splitting_mode))
 	
 	#get the coordinates for all of the slides in the left half of the iamge
 	left_slides_coords = find_left_slides(images[0], pdf_name, min_slide_width, min_slide_height, max_slide_width, max_slide_height)	
@@ -458,7 +458,7 @@ def process_4_slide_pdf(images, pdf_name, input_location, output_destination):
 	max_slide_width = 1050
 	max_slide_height = 840
 
-	print_debug_msg("Doing 4 slides")
+	logger.info("Doing 4 slides")
 
 	upper_left_box_coordinates = find_upper_left_slide(images[0], pdf_name, min_slide_width, min_slide_height, max_slide_width, max_slide_height) # attempt to find an individual slides so that slides can be centered in their own page
 
@@ -469,7 +469,7 @@ def process_4_slide_pdf(images, pdf_name, input_location, output_destination):
 		slides_found = [True]
 		if(len(slides_found) == 1):
 
-			print "All slides found successfully in " + pdf_name
+			logger.info("All slides found successfully in " + pdf_name)
 			cropped_slide_images = crop_images(images, slide_coordinates, slide_dimentions)
 			resized_images = resize_images(cropped_slide_images)
 			output_document_name = create_new_document(pdf_name, resized_images,output_destination) # DOCUMENT PROCESSED SUCCESFULLY!

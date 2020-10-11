@@ -95,7 +95,9 @@ def serve_file(output_filename):
 	uploaded_filename = output_filename[4:]
 	ending_char_index = len(uploaded_filename) -1
 	logger.info(str(ending_char_index))
-	return send_from_directory(file_output_location_absolute, output_filename) 
+	#return redirect(os.path.join(file_output_location_absolute, output_filename))
+	#return send_from_directory(file_output_location_absolute, output_filename) 
+	return render_template('error.html')
 
 
 @app.route('/unsuccesful')

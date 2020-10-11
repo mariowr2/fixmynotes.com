@@ -42,6 +42,34 @@ def allowed_filename(filename):
 	return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def call_pdf_splitter_subprocess(filename, splitting_mode):
+	script_path = os.path.join(app.root_path, 'app/split_pdf.py')
+	#full_path_to_filename = os.path.join(file_input_location_absolute, filename)
+	args = list()
+	args.append(sys.executable)
+	args.append(script_path)
+	args.append('-f')
+	args.append(filename)
+	args.append('-i')
+	args.append(file_input_location_absolute)
+	args.append('-o')
+	args.append(file_output_location_absolute)
+	args.append('-m')
+	args.append(str(splitting_mode))
+	
+	logger.info("running script, args:")
+	logger.info(args)
+	process = subprocess.Popen(args)
+	process.wait()
+	logger.info("Subprocess finished")
+
+	if process.returncode != 0:
+		logger.error("subprocess ended with non 0 return code. Failure!")
+		raise Exception()
+	logger.info("Subprocess returned 0 code. Success")
+	return
+
+
 #========================================================
 #	APP ROUTES
 #========================================================
@@ -83,13 +111,15 @@ def upload_pdf():
 @app.route('/uploads/<splitting_mode>/<filename>')
 def uploaded_file(filename, splitting_mode):
 	logger.info("sending file with mode "+str(splitting_mode))
-	output_filename = split_pdf.process_pdf(filename, file_input_location_absolute, file_output_location_absolute, int(splitting_mode)) #use the pdf splitter module to do the work
-	logger.info("returned filename is "+output_filename)
-	if allowed_filename(output_filename):
-		return redirect(url_for('serve_file', output_filename=output_filename))
-	else:
-		flash(output_filename)
+	
+	try:
+		call_pdf_splitter_subprocess(filename, splitting_mode)
+	except Exception:
+		logger.error("error when calling the subprocess, showing error template")
 		return redirect(url_for('unsuccesful'))
+
+	output_filename = "new_"+filename
+	return redirect(url_for('serve_file', output_filename=output_filename))
 
 
 #serve the file with the new name as part of the url for
@@ -97,10 +127,7 @@ def uploaded_file(filename, splitting_mode):
 def serve_file(output_filename):
 	uploaded_filename = output_filename[4:]
 	ending_char_index = len(uploaded_filename) -1
-	logger.info(str(ending_char_index))
-	#return redirect(os.path.join(file_output_location_absolute, output_filename))
-	#return send_from_directory(file_output_location_absolute, output_filename) 
-	return render_template('error.html')
+	return send_from_directory(file_output_location_absolute, output_filename) 
 
 
 @app.route('/unsuccesful')

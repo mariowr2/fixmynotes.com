@@ -14,6 +14,7 @@ import numpy
 import sys
 import os
 import logging
+import argparse
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -232,7 +233,7 @@ def extract_images_from_pdf(pdf_file_path):	# use the pdf2image library to conve
 	try:
 		images = convert_from_path(pdf_file_path) #get the images
 	except:
-		logger.error("Error on pdf \""+pdf_name+"\", could not split file") #catch exception
+		logger.error("Error on pdf \""+pdf_file_path+"\", could not split file") #catch exception
 
 	return images
 
@@ -423,7 +424,8 @@ def process_2_slide_pdf(images, pdf_name, input_location, output_destination):
 			output_document_name = create_new_document(pdf_name, merged_images, output_destination)
 			return output_document_name
 	else:
-		return "Failed to find slides in document."
+		logger.error("Failed to find slides in document.")
+		exit(-1)
 
 
 
@@ -449,9 +451,11 @@ def process_6_slide_pdf(images, pdf_name, input_location, output_destination, sp
 			output_document_name = create_new_document(pdf_name, resized_images,output_destination) # DOCUMENT PROCESSED SUCCESFULLY!
 			return output_document_name
 		else:
-			return "Program was unable to verify that all slides were found"
+			logger.error("Program was unable to verify that all slides were found")
+			exit(-1)
 	else:
-		return "Failed to find 3 slides on the image."
+		logger.error("Failed to find 3 slides on the image.")
+		exit(-1)
 
 def process_4_slide_pdf(images, pdf_name, input_location, output_destination):
 	
@@ -478,15 +482,16 @@ def process_4_slide_pdf(images, pdf_name, input_location, output_destination):
 			return output_document_name
 
 		else:
-			return "Program was unable to verify that all slides were found"
+			logger.error("Program was unable to verify that all slides were found")
+			exit(-1)
 	
 	else:
-		return "Failed to find individual slide."
+		logger.error("Failed to find individual slide.")
+		exit(-1)
 
 		
 
 def process_pdf(pdf_name, input_location, output_destination,splitting_mode=0):
-
 	images = extract_images_from_pdf(input_location+pdf_name) # get all pages in pdf as images
 	
 	if (images and len(images) > 0): #verify that the image extraction was successful
@@ -503,12 +508,26 @@ def process_pdf(pdf_name, input_location, output_destination,splitting_mode=0):
 			return process_2_slide_pdf(images, pdf_name, input_location, output_destination)
 		
 		else:
-			return "Incorrect dimensions or incorrect mode"
+			logger.error("Incorrect dimensions or incorrect mode")
+			exit(-1)
 	else:
-		return "Failed to extract images from pdf"
+		logger.error("Failed to extract images from pdf")
+		exit(-1)
 	
+	logger.error("could not find any imatges")
+	exit(-1)
 
-	return "epic fail"
-
+def get_args(args_list):
+	parser = argparse.ArgumentParser()
+	parser.add_argument('-f', '--filename', type=str)
+	parser.add_argument('-i', '--input_location', type=str)
+	parser.add_argument('-o', '--output_location', type=str)
+	parser.add_argument('-m', '--mode', type=int)
+	return parser.parse_args()
 	
+def main(args):
+	args = get_args(args)
+	return process_pdf(args.filename, args.input_location, args.output_location, args.mode)
 
+if __name__ == '__main__':
+	main(sys.argv[1:])

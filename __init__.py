@@ -1,6 +1,5 @@
 from flask import Flask , render_template, request, flash, url_for, redirect, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
-from systemd.journal import JournalHandler
 import werkzeug.exceptions
 import os
 import subprocess
@@ -20,7 +19,6 @@ MAX_FILE_SIZE = 25 #size in MB
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-logger.addHandler(JournalHandler())
 logger.addHandler(logging.StreamHandler())
 
 if (len(sys.argv) > 1) and (sys.argv[1] == "DEBUG"):
@@ -30,6 +28,8 @@ if (len(sys.argv) > 1) and (sys.argv[1] == "DEBUG"):
 else:
 	app.root_path = '/home/fixmynotes/fixmynotes.com/'
 	os.environ["FLASK_ENV"] = "production"
+	from systemd.journal import JournalHandler
+	logger.addHandler(JournalHandler())
 	logger.info("Running application in production mode...")
 
 app.config['UPLOAD_FOLDER'] = str(app.root_path) + "/static/uploaded_files"  

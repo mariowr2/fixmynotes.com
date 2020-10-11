@@ -1,4 +1,5 @@
 # Fixmynotes.com
+ 
 
 This flask webapp  attempts to do away with "n slides in a single slide" notes sometimes used by university professors. It is particularly painful to zoom n times per page in order to study! Just upload the pdf you wish to transform into single slide per page document. See the files in ```example_input_and_output``` to see what I mean by "n slides in a single slide". The webapp can be used at http://fixmynotes.com . You can find more information at my personal [website](https://mariomendez.me/projects/2018/12/16/fixmynotes.html).
 
@@ -32,3 +33,6 @@ Now the program and debug server can be run locally :
 ~~~~
 $ python __init__.py DEBUG
 ~~~~
+
+## Contributors
+* Big thanks to [Nico Connor](https://github.com/Nicolas-Connor)!

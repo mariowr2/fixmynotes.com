@@ -510,8 +510,9 @@ def main(args):
 		img_crop_dir_path = tempfile.mkdtemp()
 		img_resize_dir_path  = tempfile.mkdtemp()
 		return process_pdf(args.filename, args.input_location, args.output_location, args.mode, pdf_as_img_dir_path, half_imgs_dir_path, img_crop_dir_path, img_resize_dir_path)
-	except:
+	except Exception as err:
 		logger.error("split_pdf.py failed!")
+		logger.error(err)
 		failed = True
 	finally:
 		# delete all the temp files before leaving
@@ -523,6 +524,5 @@ def main(args):
 			exit(-1)
 
 	
-
 if __name__ == '__main__':
 	main(sys.argv[1:])

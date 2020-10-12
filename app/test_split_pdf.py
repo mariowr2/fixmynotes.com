@@ -75,6 +75,8 @@ def delete_all_imgs(temp_dir):
 def assert_two_slide_files_exist(test_files_dir, two_slide_pdf_filename):
     assert os.path.isfile(os.path.join(test_files_dir, two_slide_pdf_filename))
 
+def assert_two_slide_files_exist(test_files_dir, four_slide_pdf_filename):
+    assert os.path.isfile(os.path.join(test_files_dir, four_slide_pdf_filename))
 
 def test_convert_from_path(two_slide_pdf_abs_path, test_temp_dir_abs_path_pdf_as_imgs):
     split_pdf.extract_images_from_pdf(

@@ -268,7 +268,8 @@ def verify_slide(pdf_image,slide_coords,slide_size, slide_number): #verify the p
 def crop_images(images_dir, cropped_imgs_dir_dst, coords, size):  # crop all images once the coordinates are known, crop only the "individual slides"
 	assert len(list_files_in_dir(images_dir)) > 0
 	filename_counter = 0
-	for image_filename in list_files_in_dir(images_dir):
+	images_files = list_files_in_dir(images_dir)
+	for image_filename in sort_file_list_uuid(images_files):
 		image = PIL.Image.open(os.path.join(images_dir, image_filename))
 		for i in range(0, len(coords)):
 			crop_area = (coords[i][0], coords[i][1], coords[i][0] + size[0], coords[i][1] + size[1]) # area is xy coords, plus width and height
@@ -284,8 +285,9 @@ def create_new_document(filename, slides_imgs_dir, output_destination): #create 
 	working_dir_path = output_destination+output_filename # get full path of file
 	c = canvas.Canvas(working_dir_path, pagesize=letter) # create pdf document
 
+	slide_imgs_files = list_files_in_dir(slides_imgs_dir)
 	# save all images into pdf, one page at a time
-	for slide_filename in list_files_in_dir(slides_imgs_dir):
+	for slide_filename in sort_file_list_indexed_ppm(slide_imgs_files):
 		slide = PIL.Image.open(os.path.join(slides_imgs_dir, slide_filename))
 		side_im = slide
 		side_im_data = StringIO.StringIO()
@@ -303,7 +305,10 @@ def resize_images(cropped_imgs_dir, resized_imgs_dst_dir): #resize all images be
 	ref_img = get_reference_image(cropped_imgs_dir)
 	width = (basewidth/float(ref_img.size[0]))
 	height = int((float(ref_img.size[1]) * float(width)))
-	for image_filename in list_files_in_dir(cropped_imgs_dir):
+
+	cropped_imgs_files = list_files_in_dir(cropped_imgs_dir)
+
+	for image_filename in sort_file_list_indexed_ppm(cropped_imgs_files):
 		image = PIL.Image.open(os.path.join(cropped_imgs_dir, image_filename))
 		image = image.resize((basewidth, height), PIL.Image.ANTIALIAS)
 		image.save(os.path.join(resized_imgs_dst_dir, image_filename), 'PPM')
@@ -375,17 +380,17 @@ def process_2_slide_pdf(pdf_as_img_dir_path, pdf_name, input_location, output_de
 		#crop all images in half, save each of these halves to a temporary directory
 		filename_counter = 0
 		assert len(list_files_in_dir(pdf_as_img_dir_path)) > 0
-		for image_filename in list_files_in_dir(pdf_as_img_dir_path):
+		pdf_as_img_filenames = list_files_in_dir(pdf_as_img_dir_path) 
+		for image_filename in sort_file_list_uuid(pdf_as_img_filenames):
 			image = PIL.Image.open(os.path.join(pdf_as_img_dir_path, image_filename)) #open the image from the temp dir containing the whole doc as a imgs
 			
 			#crop the top and save it to the temp dir
 			upper_img_half = image.crop(area_upper_half)
-			upper_img_half.save(os.path.join(half_imgs_dir_path, str(filename_counter)+".ppm"), 'PPM')
+			upper_img_half.save(os.path.join(half_imgs_dir_path, 'a-b-c-d-e-'+str(filename_counter)+'.ppm'), 'PPM') #a-b-c.. is an ugly hack for filenames to look as crop_images expects them
 			filename_counter+=1
-
 			#crop the bottom and save it to the temp dir
 			lower_img_half = image.crop(area_lower_half)
-			lower_img_half.save(os.path.join(half_imgs_dir_path, str(filename_counter)+".ppm"), 'PPM')
+			lower_img_half.save(os.path.join(half_imgs_dir_path, 'a-b-c-d-e-'+str(filename_counter)+'.ppm'), 'PPM')
 			filename_counter+=1
 
 		#crop and resize, seperately , merge in the end
@@ -436,8 +441,28 @@ def process_4_slide_pdf(pdf_as_img_dir_path, pdf_name, input_location, output_de
 		logger.error("Failed to find individual slide.")
 		raise Exception("Failed to find individual slide.")
 
+def get_filename_int_identifier_from_uuid(filename):
+	dash_separated_filename = filename.split("-")
+	assert len(dash_separated_filename) > 0
+	last_element = dash_separated_filename[len(dash_separated_filename) - 1] # string shoud look like '23.ppm'
+	last_element_int = last_element[:len(last_element) - 4] # remove the .ppm file extension
+	return int(last_element_int)
+
+#sorts (ascending) a list of filenames of the form '98d0b582-5b10-4377-8edc-39079905d9f0-3.ppm', '98d0b582-5b10-4377-8edc-39079905d9f0-1.ppm...
+def sort_file_list_uuid(file_list):
+	return sorted(file_list, key=lambda filename: get_filename_int_identifier_from_uuid(filename))
+
+def get_filename_int_identifier_from_indexed_ppm(filename):
+	file_index = filename[:len(filename) - 4] # remove the .ppm file extension
+	return int(file_index)
+
+# sorts (ascending) a list of filenames of the form ['6.ppm', '11.ppm', '5.ppm', '1.ppm', '9.ppm']..
+def sort_file_list_indexed_ppm(file_list):
+	return sorted(file_list, key=lambda filename: get_filename_int_identifier_from_indexed_ppm(filename))
+
 def list_files_in_dir(dir_path):
-	return sorted([f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))])
+	file_list = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
+	return file_list
 
 def img_extraction_success(dir_path):
 	extracted_img_filenames = list_files_in_dir(dir_path)

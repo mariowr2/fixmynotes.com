@@ -229,7 +229,8 @@ def calculate_remaining_slides_coordinates(left_half_slides_coords, pdf_size):
 def extract_images_from_pdf(pdf_file_path, dir_path):	# use the pdf2image library to convert every page in the pdf to an image
 	try:
 		images = convert_from_path(pdf_file_path, output_folder=dir_path)
-	except:
+	except Exception as err:
+		logger.error("exceptio is "+err)
 		logger.error("Error on pdf \""+pdf_file_path+"\",pdf2 img failed to convert pdf to images") #catch exception
 		raise Exception("Error on pdf \""+pdf_file_path+"\",pdf2 img failed to convert pdf to images")
 	return images
@@ -409,9 +410,9 @@ def process_6_slide_pdf(pdf_as_img_dir_path, pdf_name, input_location, output_de
 	if left_slides_coords:
 		left_side_slide_coords, right_side_slide_coords, slide_size = calculate_remaining_slides_coordinates(left_slides_coords, reference_img.size)
 		combined_slides = merge_slides_from_halves(left_side_slide_coords, right_side_slide_coords, splitting_mode)	
-		cropped_slide_images = crop_images(images,combined_slides, slide_size)
-		resized_images = resize_images(cropped_slide_images)
-		output_document_name = create_new_document(pdf_name, resized_images,output_destination) 
+		crop_images(pdf_as_img_dir_path, img_crop_dir_path, combined_slides, slide_size)
+		resize_images(img_crop_dir_path, img_resize_dir_path)
+		output_document_name = create_new_document(pdf_name, img_resize_dir_path, output_destination) 
 		return output_document_name
 	else:
 		logger.error("Failed to find 3 slides on the image.")
@@ -479,10 +480,10 @@ def main(args):
 	args = get_args(args)
 	failed = False
 	try:
-		pdf_as_img_dir_path = tempfile.TemporaryDirectory()
-		half_imgs_dir_path = tempfile.TemporaryDirectory()
-		img_crop_dir_path = tempfile.TemporaryDirectory()
-		img_resize_dir_path  = tempfile.TemporaryDirectory()
+		pdf_as_img_dir_path = tempfile.mkdtemp()
+		half_imgs_dir_path = tempfile.mkdtemp()
+		img_crop_dir_path = tempfile.mkdtemp()
+		img_resize_dir_path  = tempfile.mkdtemp()
 		return process_pdf(args.filename, args.input_location, args.output_location, args.mode, pdf_as_img_dir_path, half_imgs_dir_path, img_crop_dir_path, img_resize_dir_path)
 	except:
 		logger.error("split_pdf.py failed!")

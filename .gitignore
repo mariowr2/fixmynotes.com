@@ -5,3 +5,10 @@ static/served_files/*.pdf
 venv/
 virtual_env/
 app.log
+
+#test dirs
+app/test_files/new_*.pdf
+app/test_files/cropped_imgs/*
+app/test_files/half_imgs/*
+app/test_files/resized_imgs/*
+app/test_files/test_temp_dir_pfd_as_imgs/*

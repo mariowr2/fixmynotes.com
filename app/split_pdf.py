@@ -302,12 +302,10 @@ def resize_images(cropped_imgs_dir, resized_imgs_dst_dir): #resize all images be
 	ref_img = get_reference_image(cropped_imgs_dir)
 	width = (basewidth/float(ref_img.size[0]))
 	height = int((float(ref_img.size[1]) * float(width)))
-	filename_counter = 0
 	for image_filename in list_files_in_dir(cropped_imgs_dir):
 		image = PIL.Image.open(os.path.join(cropped_imgs_dir, image_filename))
 		image = image.resize((basewidth, height), PIL.Image.ANTIALIAS)
-		image.save(os.path.join(resized_imgs_dst_dir, str(filename_counter)+".ppm"), 'PPM')
-		filename_counter+=1
+		image.save(os.path.join(resized_imgs_dst_dir, image_filename), 'PPM')
 
 
 def assert_document_dimensions(width, height):

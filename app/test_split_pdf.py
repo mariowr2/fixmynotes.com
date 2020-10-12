@@ -34,11 +34,18 @@ def test_temp_dir_abs_path_img_resize(test_files_dir):
 def two_slide_pdf_filename(test_files_dir):
     return "2_slides_3_pgs.pdf"
 
+@pytest.fixture
+def four_slide_pdf_filename(test_files_dir):
+    return "4_slides_3_pgs.pdf"
+
 
 @pytest.fixture
 def two_slide_pdf_abs_path(test_files_dir, two_slide_pdf_filename):
     return os.path.join(test_files_dir, two_slide_pdf_filename)
 
+@pytest.fixture
+def four_slide_pdf_abs_path(test_files_dir, four_slide_pdf_filename):
+    return os.path.join(test_files_dir, four_slide_pdf_filename)
 
 @pytest.fixture
 def two_slide_mode():
@@ -92,4 +99,12 @@ def test_process_2_slides_pdf(two_slide_pdf_abs_path, test_temp_dir_abs_path_pdf
 
     output_document_filename = split_pdf.process_2_slide_pdf(
         test_temp_dir_abs_path_pdf_as_imgs, two_slide_pdf_filename, test_files_dir, test_files_dir, first_img, test_temp_dir_abs_path_half_imgs, test_temp_dir_abs_path_img_crop, test_temp_dir_abs_path_img_resize)
-    
+
+def test_process_4_slides_pdf(four_slide_pdf_abs_path, test_temp_dir_abs_path_pdf_as_imgs, four_slide_pdf_filename, test_files_dir, test_temp_dir_abs_path_img_crop, test_temp_dir_abs_path_img_resize):
+    split_pdf.extract_images_from_pdf(
+        four_slide_pdf_abs_path, test_temp_dir_abs_path_pdf_as_imgs)
+    first_img = split_pdf.get_reference_image(
+        test_temp_dir_abs_path_pdf_as_imgs)
+
+    output_document_filename = split_pdf.process_4_slide_pdf(
+        test_temp_dir_abs_path_pdf_as_imgs, four_slide_pdf_filename, test_files_dir, test_files_dir, first_img, test_temp_dir_abs_path_img_crop, test_temp_dir_abs_path_img_resize)

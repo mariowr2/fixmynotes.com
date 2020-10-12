@@ -381,46 +381,22 @@ def process_2_slide_pdf(images, pdf_name, input_location, output_destination):
 		lower_slide_x = lower_box_coordinates[0][0][0]  
 		lower_slide_y = lower_box_coordinates[0][0][1]
 
-
-		if (upper_slide_x == lower_slide_x) and (upper_slide_y == lower_slide_y) and (upper_slide_width == lower_slide_width) and (upper_slide_height == lower_slide_height):
-			logger.info("Symmetry <3")
-
-			slide_coords = [[upper_slide_x, upper_slide_y]]
-
-			#now calcualate the real xy of the image in the bottom
-			distance_to_lower_bottom = images[0].size[1]/2 - upper_box_coordinates[2][0][1]
-			lower_slide_y = (images[0].size[1]/2) + distance_to_lower_bottom #only need to calculate y, x will be the same		
-			slide_coords.insert(2, [upper_slide_x, lower_slide_y])
-
-			logger.info("All slides found successfully in " + pdf_name)
-
-			cropped_slide_images = crop_images(images, slide_coords, (upper_slide_width, upper_slide_height))
-			resized_images = resize_images(cropped_slide_images)
-			output_document_name = create_new_document(pdf_name, resized_images,output_destination) # DOCUMENT PROCESSED SUCCESFULLY!
-			return output_document_name
-
-
-		else:
-			logger.info("Not symmetrical")
-			#crop all images in half
-			upper_half_images = []
-			for image in images:
-				upper_image_half = image.crop(area_upper_half)
-				upper_half_images.append(upper_image_half)
-			lower_half_images = []
-			for image in images:
-				lower_image_half = image.crop(area_lower_half)
-				lower_half_images.append(lower_image_half)
-			#crop and resize, seperately , merge in the end
-			cropped_upper_slides_images = crop_images(upper_half_images,[[upper_slide_x, upper_slide_y]], (upper_slide_width, upper_slide_height))
-			cropped_lower_slides_images = crop_images(lower_half_images,[[lower_slide_x, lower_slide_y]], (lower_slide_width, lower_slide_height))
-
-			resized_upper_images = resize_images(cropped_upper_slides_images)
-			resized_lower_images = resize_images(cropped_lower_slides_images)
-
-			merged_images = merge_images(resized_upper_images, resized_lower_images)
-			output_document_name = create_new_document(pdf_name, merged_images, output_destination)
-			return output_document_name
+		#crop all images in half
+		upper_half_images = []
+		lower_half_images = []
+		for image in images:
+			upper_image_half = image.crop(area_upper_half)
+			upper_half_images.append(upper_image_half)
+			lower_image_half = image.crop(area_lower_half)
+			lower_half_images.append(lower_image_half)
+		
+		#merge the images
+		merged_images = merge_images(upper_half_images, lower_half_images)
+		#crop and resize, seperately , merge in the end
+		cropped_images = crop_images(merged_images,[[upper_slide_x, upper_slide_y]], (upper_slide_width, upper_slide_height))
+		resized_cropped_images = resize_images(cropped_images)
+		output_document_name = create_new_document(pdf_name, resized_cropped_images, output_destination)
+		return output_document_name
 	else:
 		logger.error("Failed to find slides in document.")
 		exit(-1)

@@ -14,6 +14,7 @@ import cv2
 import numpy
 import sys
 import os
+import shutil
 import logging
 import argparse
 
@@ -133,9 +134,7 @@ def find_left_slides_using_opencv(image, min_width, min_height, max_width, max_h
 
 #used when finding 6 slides total, returns the coordinates of all slides in the left half of the image
 def find_left_slides(image, pdf_name, min_width, min_height, max_width, max_height):
-
 	area = (0,0,image.size[0]/2, image.size[1])
-	#area = (image.size[0]/2,0,image.size[0], image.size[1]) #right half of image
 	image_quadrant = image.crop(area)
 	left_slide_coordinates = find_left_slides_using_opencv(image_quadrant, min_width, min_height, max_width, max_height)
 	return left_slide_coordinates
@@ -227,16 +226,12 @@ def calculate_remaining_slides_coordinates(left_half_slides_coords, pdf_size):
 	return left_boxes_coords, right_boxes_coords, (box_width, box_height)
 
 
-def extract_images_from_pdf(pdf_file_path):	# use the pdf2image library to convert every page in the pdf to an image
-	
-	images = None
-
+def extract_images_from_pdf(pdf_file_path, dir_path):	# use the pdf2image library to convert every page in the pdf to an image
 	try:
-		with tempfile.TemporaryDirectory() as path:
-			images = convert_from_path(pdf_file_path, output_folder=path)
+		images = convert_from_path(pdf_file_path, output_folder=dir_path)
 	except:
-		logger.error("Error on pdf \""+pdf_file_path+"\", could not split file") #catch exception
-
+		logger.error("Error on pdf \""+pdf_file_path+"\",pdf2 img failed to convert pdf to images") #catch exception
+		raise Exception("Error on pdf \""+pdf_file_path+"\",pdf2 img failed to convert pdf to images")
 	return images
 
 
@@ -269,28 +264,28 @@ def verify_slide(pdf_image,slide_coords,slide_size, slide_number): #verify the p
 
 
 	
-def crop_images(images, coords, size):  # crop all images once the coordinates are known, crop only the "individual slides"
-	cropped_images = []
-	#for each image, do the 4 crops (since 4 slides per image)
-	logger.info("length of coords "+str(len(coords)))
-	logger.info("number of images "+str(len(images)))
-	for image in images:
+def crop_images(images_dir, cropped_imgs_dir_dst, coords, size):  # crop all images once the coordinates are known, crop only the "individual slides"
+	assert len(list_files_in_dir(images_dir)) > 0
+	filename_counter = 0
+	for image_filename in list_files_in_dir(images_dir):
+		image = PIL.Image.open(os.path.join(images_dir, image_filename))
 		for i in range(0, len(coords)):
 			crop_area = (coords[i][0], coords[i][1], coords[i][0] + size[0], coords[i][1] + size[1]) # area is xy coords, plus width and height
 			cropped_image = image.crop(crop_area)
-			cropped_images.append(cropped_image)
-	return cropped_images
+			cropped_image.save(os.path.join(cropped_imgs_dir_dst, str(filename_counter)+".ppm"), 'PPM')
+			filename_counter+=1
 
 
 
-def create_new_document(filename, slides, output_destination): #create the output document
-	
+def create_new_document(filename, slides_imgs_dir, output_destination): #create the output document
+	assert len(list_files_in_dir(slides_imgs_dir)) > 0
 	output_filename = "new_"+filename
 	working_dir_path = output_destination+output_filename # get full path of file
 	c = canvas.Canvas(working_dir_path, pagesize=letter) # create pdf document
 
 	# save all images into pdf, one page at a time
-	for slide in slides:
+	for slide_filename in list_files_in_dir(slides_imgs_dir):
+		slide = PIL.Image.open(os.path.join(slides_imgs_dir, slide_filename))
 		side_im = slide
 		side_im_data = StringIO.StringIO()
 		side_im.save(side_im_data, format='png')
@@ -301,20 +296,19 @@ def create_new_document(filename, slides, output_destination): #create the outpu
 	c.save() # save the output!
 	return output_filename
 
-def resize_images(images): #resize all images before they are included in the output	
-	if images is not None:
-		resized_images = []
-		basewidth = 500   #moidy this value to change image size!
-		width = (basewidth/float(images[0].size[0]))
-		height = int((float(images[0].size[1]) * float(width)))
+def resize_images(cropped_imgs_dir, resized_imgs_dst_dir): #resize all images before they are included in the output	
+	assert len(list_files_in_dir(cropped_imgs_dir)) > 0
+	basewidth = 500   #moidy this value to change image size!
+	ref_img = get_reference_image(cropped_imgs_dir)
+	width = (basewidth/float(ref_img.size[0]))
+	height = int((float(ref_img.size[1]) * float(width)))
+	filename_counter = 0
+	for image_filename in list_files_in_dir(cropped_imgs_dir):
+		image = PIL.Image.open(os.path.join(cropped_imgs_dir, image_filename))
+		image = image.resize((basewidth, height), PIL.Image.ANTIALIAS)
+		image.save(os.path.join(resized_imgs_dst_dir, str(filename_counter)+".ppm"), 'PPM')
+		filename_counter+=1
 
-		for image in images: # resize all images
-			image = image.resize((basewidth, height), PIL.Image.ANTIALIAS)
-			resized_images.append(image)
-
-		return resized_images
-	else:
-		return None
 
 def assert_document_dimensions(width, height):
 	orientation = False
@@ -346,20 +340,18 @@ def merge_images(list_one, list_two):
 #=============================================================
 # MAIN PROCESSING FOR EACH KIND OF PDF
 #=============================================================
-def process_2_slide_pdf(images, pdf_name, input_location, output_destination):
+def process_2_slide_pdf(pdf_as_img_dir_path, pdf_name, input_location, output_destination, reference_img, half_imgs_dir_path, img_crop_dir_path, img_resize_dir_path):
 	min_slide_width = 200
 	min_slide_height = 200
 	max_slide_width = 1050
 	max_slide_height = 840
 
-	logger.info("Doing 2 slides...")
-
 	#first crop the image in the two halves
-	area_upper_half= (0,0,images[0].size[0], images[0].size[1]/2) # coordinates of upper left quadrant of image)
-	area_lower_half = (0,images[0].size[1]/2, images[0].size[0], images[0].size[1])
+	area_upper_half= (0,0,reference_img.size[0], reference_img.size[1]/2) # coordinates of upper left quadrant of image)
+	area_lower_half = (0, reference_img.size[1]/2, reference_img.size[0], reference_img.size[1])
 	
-	upper_image_half = images[0].crop(area_upper_half)
-	lower_image_half = images[0].crop(area_lower_half) 	
+	upper_image_half = reference_img.crop(area_upper_half)
+	lower_image_half = reference_img.crop(area_lower_half) 	
 
 	upper_box_coordinates = find_box_using_opencv(upper_image_half, min_slide_width, min_slide_height, max_slide_width, max_slide_height, False) # attempt to find an individual slides so that slides can be centered in their own page
 	lower_box_coordinates = find_box_using_opencv(lower_image_half, min_slide_width, min_slide_height, max_slide_width, max_slide_height, False) # attempt to find an individual slides so that slides can be centered in their own page
@@ -381,38 +373,43 @@ def process_2_slide_pdf(images, pdf_name, input_location, output_destination):
 		lower_slide_x = lower_box_coordinates[0][0][0]  
 		lower_slide_y = lower_box_coordinates[0][0][1]
 
-		#crop all images in half
-		upper_half_images = []
-		lower_half_images = []
-		for image in images:
-			upper_image_half = image.crop(area_upper_half)
-			upper_half_images.append(upper_image_half)
-			lower_image_half = image.crop(area_lower_half)
-			lower_half_images.append(lower_image_half)
-		
-		#merge the images
-		merged_images = merge_images(upper_half_images, lower_half_images)
+		#crop all images in half, save each of these halves to a temporary directory
+		filename_counter = 0
+		assert len(list_files_in_dir(pdf_as_img_dir_path)) > 0
+		for image_filename in list_files_in_dir(pdf_as_img_dir_path):
+			image = PIL.Image.open(os.path.join(pdf_as_img_dir_path, image_filename)) #open the image from the temp dir containing the whole doc as a imgs
+			
+			#crop the top and save it to the temp dir
+			upper_img_half = image.crop(area_upper_half)
+			upper_img_half.save(os.path.join(half_imgs_dir_path, str(filename_counter)+".ppm"), 'PPM')
+			filename_counter+=1
+
+			#crop the bottom and save it to the temp dir
+			lower_img_half = image.crop(area_lower_half)
+			lower_img_half.save(os.path.join(half_imgs_dir_path, str(filename_counter)+".ppm"), 'PPM')
+			filename_counter+=1
+
 		#crop and resize, seperately , merge in the end
-		cropped_images = crop_images(merged_images,[[upper_slide_x, upper_slide_y]], (upper_slide_width, upper_slide_height))
-		resized_cropped_images = resize_images(cropped_images)
-		output_document_name = create_new_document(pdf_name, resized_cropped_images, output_destination)
+		crop_images(half_imgs_dir_path, img_crop_dir_path,[[upper_slide_x, upper_slide_y]], (upper_slide_width, upper_slide_height))
+		resize_images(img_crop_dir_path, img_resize_dir_path)
+		output_document_name = create_new_document(pdf_name, img_resize_dir_path, output_destination)
 		return output_document_name
 	else:
 		logger.error("Failed to find slides in document.")
-		exit(-1)
+		raise Exception("Failed to find slides in document.")
 
 
 
-def process_6_slide_pdf(images, pdf_name, input_location, output_destination, splitting_mode):
+def process_6_slide_pdf(pdf_as_img_dir_path, pdf_name, input_location, output_destination, splitting_mode, reference_img, img_crop_dir_path, img_resize_dir_path):
 	min_slide_width = 50
 	min_slide_height = 50
 	max_slide_width = 1050
 	max_slide_height = 840
 	logger.info("Doing 6 slides, mode "+str(splitting_mode))
 	#get the coordinates for all of the slides in the left half of the iamge
-	left_slides_coords = find_left_slides(images[0], pdf_name, min_slide_width, min_slide_height, max_slide_width, max_slide_height)	
+	left_slides_coords = find_left_slides(reference_img, pdf_name, min_slide_width, min_slide_height, max_slide_width, max_slide_height)	
 	if left_slides_coords:
-		left_side_slide_coords, right_side_slide_coords, slide_size = calculate_remaining_slides_coordinates(left_slides_coords, images[0].size)
+		left_side_slide_coords, right_side_slide_coords, slide_size = calculate_remaining_slides_coordinates(left_slides_coords, reference_img.size)
 		combined_slides = merge_slides_from_halves(left_side_slide_coords, right_side_slide_coords, splitting_mode)	
 		cropped_slide_images = crop_images(images,combined_slides, slide_size)
 		resized_images = resize_images(cropped_slide_images)
@@ -420,51 +417,57 @@ def process_6_slide_pdf(images, pdf_name, input_location, output_destination, sp
 		return output_document_name
 	else:
 		logger.error("Failed to find 3 slides on the image.")
-		exit(-1)
+		raise Exception("Failed to find 3 slides on the image.")
 
-def process_4_slide_pdf(images, pdf_name, input_location, output_destination):
+def process_4_slide_pdf(pdf_as_img_dir_path, pdf_name, input_location, output_destination, reference_img, img_crop_dir_path, img_resize_dir_path):
 	min_slide_width = 200
 	min_slide_height = 200
 	max_slide_width = 1050
 	max_slide_height = 840
 	logger.info("Doing 4 slides")
-	upper_left_box_coordinates = find_upper_left_slide(images[0], pdf_name, min_slide_width, min_slide_height, max_slide_width, max_slide_height) # attempt to find an individual slides so that slides can be centered in their own page
+	upper_left_box_coordinates = find_upper_left_slide(reference_img, pdf_name, min_slide_width, min_slide_height, max_slide_width, max_slide_height) # attempt to find an individual slides so that slides can be centered in their own page
 	if(upper_left_box_coordinates is not None): #only proceed if coordinates were found
-		slide_coordinates, slide_dimentions = calculate_all_slides_coords(upper_left_box_coordinates, images[0].size) #get all cords from all slides per image
-		slides_found = [True]
-		if(len(slides_found) == 1):
-			logger.info("All slides found successfully in " + pdf_name)
-			cropped_slide_images = crop_images(images, slide_coordinates, slide_dimentions)
-			resized_images = resize_images(cropped_slide_images)
-			output_document_name = create_new_document(pdf_name, resized_images,output_destination) # DOCUMENT PROCESSED SUCCESFULLY!
-			return output_document_name
-		else:
-			logger.error("Program was unable to verify that all slides were found")
-			exit(-1)
+		slide_coordinates, slide_dimentions = calculate_all_slides_coords(upper_left_box_coordinates, reference_img.size) #get all cords from all slides per image
+		logger.info("All slides found successfully in " + pdf_name)
+		crop_images(pdf_as_img_dir_path, img_crop_dir_path, slide_coordinates, slide_dimentions)
+		resize_images(img_crop_dir_path, img_resize_dir_path)
+		output_document_name = create_new_document(pdf_name, img_resize_dir_path, output_destination) # DOCUMENT PROCESSED SUCCESFULLY!
+		return output_document_name
 	else:
 		logger.error("Failed to find individual slide.")
-		exit(-1)
+		raise Exception("Failed to find individual slide.")
 
-		
+def list_files_in_dir(dir_path):
+	return sorted([f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))])
 
-def process_pdf(pdf_name, input_location, output_destination,splitting_mode=0):
-	images = extract_images_from_pdf(input_location+pdf_name) # get all pages in pdf as images
-	if (images and len(images) > 0): #verify that the image extraction was successful
-		correct_dimensions = assert_document_dimensions(images[0].size[0], images[0].size[1]) # get size of document
-		if correct_dimensions and splitting_mode == 0:
-			return process_4_slide_pdf(images, pdf_name, input_location, output_destination)
+def img_extraction_success(dir_path):
+	extracted_img_filenames = list_files_in_dir(dir_path)
+	return len(extracted_img_filenames) > 0
+
+def get_reference_image(dir_path):
+	first_img_path = os.path.join(dir_path, list_files_in_dir(dir_path)[0])
+	first_img = PIL.Image.open(first_img_path)
+	return first_img
+
+def process_pdf(pdf_name, input_location, output_destination, splitting_mode, pdf_as_img_dir_path, half_imgs_dir_path, img_crop_dir_path, img_resize_dir_path):
+	extract_images_from_pdf(input_location+pdf_name, pdf_as_img_dir_path) # get all pages in pdf as images
+	if img_extraction_success(pdf_as_img_dir_path) is True: #verify that the image extraction was successful
+		reference_img = get_reference_image(pdf_as_img_dir_path)
+		correct_dimensions = assert_document_dimensions(reference_img.size[0], reference_img.size[1]) # get size of document
+		if correct_dimensions and splitting_mode ==0:
+			return process_4_slide_pdf(pdf_as_img_dir_path, pdf_name, input_location, output_destination, reference_img, img_crop_dir_path, img_resize_dir_path)
 		if correct_dimensions and (splitting_mode == 1) or (splitting_mode == 2):
-			return process_6_slide_pdf(images, pdf_name, input_location, output_destination, splitting_mode)
+			return process_6_slide_pdf(pdf_as_img_dir_path, pdf_name, input_location, output_destination, splitting_mode, reference_img, img_crop_dir_path, img_resize_dir_path)
 		if correct_dimensions and splitting_mode == 3:
-			return process_2_slide_pdf(images, pdf_name, input_location, output_destination)
+			return process_2_slide_pdf(pdf_as_img_dir_path, pdf_name, input_location, output_destination, reference_img, half_imgs_dir_path, img_crop_dir_path, img_resize_dir_path)
 		else:
 			logger.error("Incorrect dimensions or incorrect mode")
-			exit(-1)
+			raise Exception("Incorrect dimensions or incorrect mode")
 	else:
 		logger.error("Failed to extract images from pdf")
-		exit(-1)
+		raise Exception("Failed to extract images from pdf")
 	logger.error("could not find any imatges")
-	exit(-1)
+	raise Exception("could not find any imatges")
 
 def get_args(args_list):
 	parser = argparse.ArgumentParser()
@@ -476,7 +479,26 @@ def get_args(args_list):
 	
 def main(args):
 	args = get_args(args)
-	return process_pdf(args.filename, args.input_location, args.output_location, args.mode)
+	failed = False
+	try:
+		pdf_as_img_dir_path = tempfile.TemporaryDirectory()
+		half_imgs_dir_path = tempfile.TemporaryDirectory()
+		img_crop_dir_path = tempfile.TemporaryDirectory()
+		img_resize_dir_path  = tempfile.TemporaryDirectory()
+		return process_pdf(args.filename, args.input_location, args.output_location, args.mode, pdf_as_img_dir_path, half_imgs_dir_path, img_crop_dir_path, img_resize_dir_path)
+	except:
+		logger.error("split_pdf.py failed!")
+		failed = True
+	finally:
+		# delete all the temp files before leaving
+		shutil.rmtree(pdf_as_img_dir_path)
+		shutil.rmtree(half_imgs_dir_path)
+		shutil.rmtree(img_crop_dir_path)
+		shutil.rmtree(img_resize_dir_path)
+		if failed:
+			exit(-1)
+
+	
 
 if __name__ == '__main__':
 	main(sys.argv[1:])

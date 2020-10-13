@@ -8,18 +8,18 @@ import time
 import logging
 import traceback
 
+
 from app import split_pdf 
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+logger.addHandler(logging.StreamHandler())
+
 
 app = Flask(__name__)
 app.secret_key = 'secret'
 MAX_FILE_SIZE = 25 #size in MB
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-logger.addHandler(logging.StreamHandler())
 
 if (len(sys.argv) > 1) and (sys.argv[1] == "DEBUG"):
 	app.root_path = os.getcwd()
@@ -28,9 +28,6 @@ if (len(sys.argv) > 1) and (sys.argv[1] == "DEBUG"):
 else:
 	app.root_path = '/home/fixmynotes/fixmynotes.com/'
 	os.environ["FLASK_ENV"] = "production"
-	from systemd.journal import JournalHandler
-	logger.addHandler(JournalHandler())
-	logger.info("Running application in production mode...")
 
 app.config['UPLOAD_FOLDER'] = str(app.root_path) + "/static/uploaded_files"  
 file_input_location_absolute = str(app.root_path)+"/static/uploaded_files/" 

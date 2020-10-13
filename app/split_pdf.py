@@ -9,6 +9,7 @@ from reportlab.platypus.flowables import Image
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from backports import tempfile
+import systemd
 import StringIO
 import cv2
 import numpy
@@ -21,10 +22,6 @@ import argparse
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
-
-if os.environ.get('FLASK_ENV') == 'production':
-	from systemd.journal import JournalHandler
-	logger.addHandler(logging.StreamHandler())
 
 
 def find_box_using_opencv(image, min_width, min_height, max_width, max_height, debug):	#find a slide/box in an image (should only pass images that contain a single slide)
